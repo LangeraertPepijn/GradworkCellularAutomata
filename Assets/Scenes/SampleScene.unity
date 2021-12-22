@@ -155,17 +155,20 @@ MonoBehaviour:
   _cube: {fileID: 3440554682568251086, guid: e876bbbd2b549534f86e4263de21a926, type: 3}
   _randomSeed: Test
   _useRandomSeed: 1
+  _Use3D: 0
   _MakeEdgesWalls: 1
-  _randomFillPercent: 0.581
-  _width: 30
-  _height: 10
-  _depth: 30
-  _iterations: 4
-  _neighbourWallCountToChange: 21
-  _neighbourEmptyCountToChange: 9
+  _randomFillPercent: 0.68
+  _sizeThreshold: 5
+  _width: 40
+  _height: 40
+  _depth: 1
+  _iterations: 6
+  _neighbourWallCountToChange: 4
+  _neighbourEmptyCountToChange: 4
   _showSlice: 0
   _showWalls: 0
-  _showEmpty: 0
+  _showEmpty: 1
+  _showShell: 0
   _sliceIndex: 0
 --- !u!4 &132861040
 Transform:
