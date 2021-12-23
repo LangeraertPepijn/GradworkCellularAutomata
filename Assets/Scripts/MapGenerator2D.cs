@@ -1,9 +1,7 @@
 using UnityEngine;
 using System;
 using System.Collections.Generic;
-using System.Data.SqlTypes;
 using JetBrains.Annotations;
-using UnityEditor.Experimental.GraphView;
 using Random = UnityEngine.Random;
 
 
@@ -269,6 +267,13 @@ public class MapGenerator2D :  MapGenerator
                 survivingRooms.Add(new Room(region, _map));
             }
         }
+        //sort form big to small
+        if (survivingRooms.Count > 0)
+        {
+            survivingRooms.Sort();
+            survivingRooms[0].IsMainRoom = true;
+            survivingRooms[0].IsAccessableFormMainRoom = true;
+        }
 
         ConnectClosestRooms(survivingRooms);
     }
@@ -277,20 +282,47 @@ public class MapGenerator2D :  MapGenerator
 
     protected override void ConnectClosestRooms(List<Room> roomsToConnect)
     {
+        List<Room> roomsConnectedToMain = new List<Room>();
+        List<Room> roomsNotConnectedToMain = new List<Room>();
+
+        if (_forceAccessibilityFromMainRoom)
+        {
+            foreach (Room room in roomsToConnect)
+            {
+                if (room.IsAccessableFormMainRoom)
+                {
+                    roomsConnectedToMain.Add(room);
+                }
+                else
+                {
+                    roomsNotConnectedToMain.Add(room);
+                }
+            }
+        }
+        else
+        {
+            roomsConnectedToMain = roomsToConnect;
+            roomsNotConnectedToMain = roomsToConnect;
+        }
         float shortestDistance = float.MaxValue;
         Coord bestFirstCell = new Coord();
         Coord bestSecondCell = new Coord();
         Room bestFirstRoom = new Room();
         Room bestSecondRoom = new Room();
 
-        foreach (Room firstRoom in roomsToConnect)
+        foreach (Room firstRoom in roomsConnectedToMain)
         {
-            foreach (Room secondRoom in roomsToConnect)
+            //if you dont need acces to the largest room and the room is already connected skip that room
+            if(!_forceAccessibilityFromMainRoom&&firstRoom.ConnectedRooms.Count>0)
+                continue;
+
+            foreach (Room secondRoom in roomsNotConnectedToMain)
             {
-                if (firstRoom == secondRoom)
+                //if the room is itself skip it or if the rooms are already connected skip 
+                if (firstRoom == secondRoom|| firstRoom.IsConnected(secondRoom))
                     continue;
-                if (firstRoom.IsConnected(secondRoom))
-                    break;
+
+
                 for (int indexFirstRoom = 0; indexFirstRoom < firstRoom.EdgeCells.Count; indexFirstRoom++)
                 {
                     for (int indexSecondRoom = 0; indexSecondRoom < secondRoom.EdgeCells.Count; indexSecondRoom++)
@@ -309,11 +341,18 @@ public class MapGenerator2D :  MapGenerator
                     }
                 }
             }
-            if (shortestDistance < float.MaxValue - 1.0f)
+            if (shortestDistance < float.MaxValue - 1.0f&&!_forceAccessibilityFromMainRoom)
             {
                 CreateCorridor(bestFirstRoom, bestSecondRoom, bestFirstCell, bestSecondCell);
                 shortestDistance = float.MaxValue;
             }
+        }
+        if (shortestDistance < float.MaxValue - 1.0f && _forceAccessibilityFromMainRoom)
+        {
+            CreateCorridor(bestFirstRoom, bestSecondRoom, bestFirstCell, bestSecondCell);
+            shortestDistance = float.MaxValue;
+            if (roomsNotConnectedToMain.Count>0)
+             ConnectClosestRooms(roomsToConnect);
         }
     }
 
@@ -322,8 +361,95 @@ public class MapGenerator2D :  MapGenerator
         Room.ConnectRooms(firstRoom, secondRoom);
         Vector3 posFirstCell = new Vector3(-_width / 2 + firstRoomCell.xCoord + 0.5f, -_height / 2 + firstRoomCell.yCoord + 0.5f, 0);
         Vector3 posSecondCell = new Vector3(-_width / 2 + secondRoomCell.xCoord + 0.5f, -_height / 2 + secondRoomCell.yCoord + 0.5f, 0);
-        Debug.DrawLine(posFirstCell, posSecondCell, Color.red, 10);
+        Debug.DrawLine(posFirstCell, posSecondCell, Color.red, 5);
         Debug.Log("ConnectionFound");
+
+        List<Coord> line = GetLine(firstRoomCell, secondRoomCell);
+
+        foreach (Coord cell in line)
+        {
+            DrawCircle(cell);
+        }
+    }
+
+    void DrawCircle(Coord cell)
+    {
+        int radius = Random.Range(_corridorRadius.x, _corridorRadius.y);
+        for (int x = -radius; x < radius; x++)
+        {
+            for (int y = -radius; y < radius; y++)
+            {
+                if (x * x + y * y <= radius * radius)
+                {
+                    int xToChange = cell.xCoord + x;
+                    int yToChange = cell.yCoord + y;
+
+                    if (IsInMap(xToChange, yToChange))
+                    {
+                        _map[xToChange, yToChange].state = States.Empty;
+                    }
+                }
+            }
+        }
+    }
+    List<Coord> GetLine(Coord from, Coord to)
+    {
+        List<Coord> line = new List<Coord>();
+
+        int x = from.xCoord;
+        int y = from.yCoord;
+
+        int dx = to.xCoord - from.xCoord;
+        int dy = to.yCoord - from.yCoord;
+
+
+        bool inverted = false;
+
+        int step = Math.Sign(dx);
+        int gradientStep = Math.Sign(dy);
+
+        int longest = Math.Abs(dx);
+        int shortest = Math.Abs(dy);
+
+        if (longest < shortest)
+        {
+            inverted = true;
+            (shortest, longest) = (longest, shortest);
+
+            (step, gradientStep) = (gradientStep, step);
+    
+        }
+
+        int gradientAccumulation = longest / 2;
+        for (int i = 0; i < longest; i++)
+        {
+            line.Add(new Coord(x,y));
+            if (inverted)
+                y += step;
+            else
+            {
+                x += step;
+            }
+
+            gradientAccumulation += shortest;
+            if (gradientAccumulation >= longest)
+            {
+                if (inverted)
+                {
+                    x += gradientStep;
+                }
+                else
+                {
+                    y += gradientStep;
+                    
+                }
+                gradientAccumulation -= longest;
+            }
+
+        }
+
+        return line;
+
     }
 
     protected override void UpdateCubes()

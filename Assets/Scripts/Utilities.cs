@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -39,17 +40,19 @@ public struct Coord
     public static implicit operator Vector2Int(Coord value) => new Vector2Int(value.xCoord, value.yCoord);
 }
 
-public class Room
+public class Room :IComparable<Room>
 {
     private List<Coord> _cells;
     private List<Coord> _edgeCells;
     private List<Room> _connectedRooms;
     private int _roomSize;
+    private bool _isMainRoom;
+    private bool _isAccessableFormMainRoom;
 
     private int _floorIndex;
     private int _roofIndex;
 
-    public Room() { }
+    public Room(){ }
 
     //2D constructor
     public Room(List<Coord> roomCells, Cell[,] map)
@@ -115,61 +118,69 @@ public class Room
         }
     }
 
-    public int RoomSize
+    public bool IsMainRoom
     {
-        get
-        {
-            return _roomSize;
-        }
-    }
-    public int FloorIndex
-    {
-        get
-        {
-            return _floorIndex;
-        }
-    }
-    public int RoofIndex
-    {
-        get
-        {
-            return _roofIndex;
-        }
+        get => _isMainRoom;
+        set => _isMainRoom = value;
     }
 
-    public List<Room> ConnectedRooms
+    public bool IsAccessableFormMainRoom
     {
-        get
+        get => _isAccessableFormMainRoom;
+        set
         {
-            return _connectedRooms;
-        }
+            if (value != _isAccessableFormMainRoom)
+            {
+                _isAccessableFormMainRoom = value;
+                if (value)
+                {
+                    foreach (var connectedRoom in ConnectedRooms)
+                    {
+                        connectedRoom.IsAccessableFormMainRoom = true;
+                    }
+                }
+            }
+        } 
     }
 
-    public List<Coord> Cells
-    {
-        get
-        {
-            return _cells;
-        }
-    }
+    public int RoomSize => _roomSize;
 
-    public List<Coord> EdgeCells
-    {
-        get
-        {
-            return _edgeCells;
-        }
-    }
+    public int FloorIndex => _floorIndex;
+
+    public int RoofIndex => _roofIndex;
+
+    public List<Room> ConnectedRooms => _connectedRooms;
+
+    public List<Coord> Cells => _cells;
+
+    public List<Coord> EdgeCells => _edgeCells;
 
     public static void ConnectRooms(Room firstRoom, Room secondRoom)
     {
+        if (firstRoom.IsAccessableFormMainRoom)
+        {
+            secondRoom.IsAccessableFormMainRoom = true;
+        }
+        else if (secondRoom.IsAccessableFormMainRoom)
+        {
+            firstRoom.IsAccessableFormMainRoom = true;
+        }
+
         firstRoom.ConnectedRooms.Add(secondRoom);
         secondRoom.ConnectedRooms.Add(firstRoom);
     }
+
+
 
     public bool IsConnected(Room otherRoom)
     {
         return _connectedRooms.Contains(otherRoom);
     }
 
+    public int CompareTo(Room other)
+    {
+        if (ReferenceEquals(this, other)) return 0;
+        if (ReferenceEquals(null, other)) return 1;
+        return other._roomSize.CompareTo(_roomSize);
+    }
 }

@@ -1,12 +1,15 @@
-using System.Collections;
+using System;
 using System.Collections.Generic;
+using System.Security.Cryptography.X509Certificates;
 using JetBrains.Annotations;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class MapGenerator3D : MapGenerator
 {
 
     [SerializeField] [Range(1, 50)] private int _depth = 50;
+    [SerializeField] private bool _colorRegions = true;
 
     [CanBeNull] private Cell[,,] _map3D;
     private States[,,] _stateBuffer3D;
@@ -46,6 +49,7 @@ public class MapGenerator3D : MapGenerator
         IterateStates();
         ExamineMap();
         UpdateCubes();
+        GetLine(new Coord(0, 5, 1), new Coord(1, 10, 2));
     }
 
     // remove old cubes
@@ -87,6 +91,10 @@ public class MapGenerator3D : MapGenerator
                     else if (_MakeEdgesWalls)
                     {
                         wallcount++;
+                    }
+                    else if (_makeShellSameAsNeighbour)
+                    {
+                        wallcount += (int)_map3D[indexX, indexY, indexZ].state;
                     }
                     else
                     {
@@ -330,27 +338,62 @@ public class MapGenerator3D : MapGenerator
                 survivingRooms.Add(new Room(region,_map3D));
             }
         }
-        ColourRegions();
+        if(_colorRegions)
+            ColourRegions();
+        //sort form big to small
+        if (survivingRooms.Count > 0)
+        {
+            survivingRooms.Sort();
+            survivingRooms[0].IsMainRoom = true;
+            survivingRooms[0].IsAccessableFormMainRoom = true;
+        }
         ConnectClosestRooms(survivingRooms);
         
     }
 
     protected override void ConnectClosestRooms(List<Room> roomsToConnect)
     {
+
+        List<Room> roomsConnectedToMain = new List<Room>();
+        List<Room> roomsNotConnectedToMain = new List<Room>();
+
+        if (_forceAccessibilityFromMainRoom)
+        {
+            foreach (Room room in roomsToConnect)
+            {
+                if (room.IsAccessableFormMainRoom)
+                {
+                    roomsConnectedToMain.Add(room);
+                }
+                else
+                {
+                    roomsNotConnectedToMain.Add(room);
+                }
+            }
+        }
+        else
+        {
+            roomsConnectedToMain = roomsToConnect;
+            roomsNotConnectedToMain = roomsToConnect;
+        }
+
         float shortestDistance = float.MaxValue;
         Coord bestFirstCell = new Coord();
         Coord bestSecondCell = new Coord();
         Room bestFirstRoom = new Room();
         Room bestSecondRoom = new Room();
 
-        foreach (Room firstRoom in roomsToConnect)
+        foreach (Room firstRoom in roomsConnectedToMain)
         {
-            foreach (Room secondRoom in roomsToConnect)
+            //if you dont need acces to the largest room and the room is already connected skip that room
+            if (!_forceAccessibilityFromMainRoom && firstRoom.ConnectedRooms.Count > 0)
+                continue;
+
+            foreach (Room secondRoom in roomsNotConnectedToMain)
             {
-                if (firstRoom == secondRoom)
+                //if the room is itself skip it or if the rooms are already connected skip 
+                if (firstRoom == secondRoom || firstRoom.IsConnected(secondRoom))
                     continue;
-                if (firstRoom.IsConnected(secondRoom))
-                    break;
                 //3 is a var
                 //if (firstRoom.FloorIndex >= secondRoom.RoofIndex+3 || firstRoom.RoofIndex+3 <= secondRoom.FloorIndex)
                 //    continue;
@@ -395,24 +438,238 @@ public class MapGenerator3D : MapGenerator
                     }
                 }
             }
-            if (shortestDistance < float.MaxValue - 1.0f)
+            if (shortestDistance < float.MaxValue - 1.0f&&!_forceAccessibilityFromMainRoom)
             {
                 CreateCorridor(bestFirstRoom, bestSecondRoom, bestFirstCell, bestSecondCell);
                 shortestDistance = float.MaxValue;
             }
         }
+        if (shortestDistance < float.MaxValue - 1.0f && _forceAccessibilityFromMainRoom)
+        {
+            CreateCorridor(bestFirstRoom, bestSecondRoom, bestFirstCell, bestSecondCell);
+            shortestDistance = float.MaxValue;
+            if (roomsNotConnectedToMain.Count > 0)
+                ConnectClosestRooms(roomsToConnect);
+        }
     }
 
 
-    
+    public enum axis 
+    {
+        x = 0,
+        y = 1,
+        z = 2
+    }
 
+    List<Coord> GetLine(Coord from, Coord to)
+    {
+        List<Coord> line = new List<Coord>();
+
+        int x = from.xCoord; 
+        int y = from.yCoord;
+        int z = from.zCoord;
+
+        int dx = to.xCoord - from.xCoord;
+        int dy = to.yCoord - from.yCoord;
+        int dz = to.zCoord - from.zCoord;
+
+        bool inverted = false;
+
+        int step = Math.Sign(dx);
+        int gradientStep = Math.Sign(dy);
+ 
+
+        int longest = Math.Abs(dx);
+        longest=Mathf.Max(Math.Abs(dx), Math.Abs(dy), Math.Abs(dz));
+        int shortest = Math.Abs(dy);
+        Enum test = axis.x;
+        Enum longestAxis = axis.x;
+        Enum shortestAxis = axis.x;
+        int extra = 0;
+        if (longest == Math.Abs(dx))
+        {
+            longestAxis = axis.x;
+            shortest=Mathf.Max( Math.Abs(dy), Math.Abs(dz));
+            if (shortest == Math.Abs(dy))
+            {
+                shortestAxis = axis.y;
+                step = Math.Sign(dx);
+                gradientStep = Math.Sign(dy);
+                test = axis.z;
+                extra = dz;
+            }
+            else
+            {
+                shortestAxis = axis.z;
+                step = Math.Sign(dx);
+                gradientStep = Math.Sign(dz);
+                test = axis.y;
+                extra = dy;
+            }
+        }
+        else if (longest == Math.Abs(dy))
+        {
+            longestAxis = axis.y;
+            shortest=Mathf.Max( Math.Abs(dx), Math.Abs(dz));
+            if (shortest == Math.Abs(dz))
+            {
+                step = Math.Sign(dy);
+                gradientStep = Math.Sign(dz);
+                shortestAxis = axis.z;
+                test = axis.x;
+                extra = dx;
+            }
+            else
+            {
+                step = Math.Sign(dy);
+                gradientStep = Math.Sign(dx);
+                shortestAxis = axis.x;
+                test = axis.z;
+                extra = dz;
+            }
+        }
+        else
+        {
+            longestAxis = axis.z;
+            shortest=Mathf.Max( Math.Abs(dy), Math.Abs(dx));
+            if (shortest == Math.Abs(dy))
+            {
+                step = Math.Sign(dz);
+                gradientStep = Math.Sign(dy);
+                shortestAxis = axis.y;
+                test = axis.x;
+                extra = dx;
+            }
+            else
+            {
+                step = Math.Sign(dz);
+                gradientStep = Math.Sign(dx);
+                shortestAxis = axis.x;
+                test = axis.y;
+                extra = dy;
+            }
+        }
+        
+
+        int gradientAccumulation = longest / 2;
+        for (int i = 0; i < longest; i++)
+        {
+            line.Add(new Coord(x, y,z));
+
+            switch (longestAxis)
+            {
+                case axis.x:
+                    // code block
+                    x += step;
+                    break;
+                case axis.y:
+                    // code block
+                    y += step;
+                    break;
+                case axis.z:
+                    z += step;
+                    break;
+
+            }
+
+            gradientAccumulation += shortest;
+            if (gradientAccumulation >= longest)
+            {
+
+                switch (shortestAxis)
+                {
+                    case axis.x:
+                        // code block
+                        x += gradientStep;
+                        break;
+                    case axis.y:
+                        // code block
+                        y += gradientStep;
+                        break;
+                    case axis.z:
+                        z += gradientStep;
+                        break;
+
+                }
+
+                gradientAccumulation -= longest;
+            }
+
+        }
+
+
+        int valueIncrease = 0;
+        for (int i = 0; i < line.Count; i++)
+        {
+
+            int value = (i + 1) * extra / line.Count;
+            if (Math.Abs(value) > valueIncrease)
+            {
+                valueIncrease = value;
+            }
+
+            switch (test)
+            {
+                case axis.x:
+                    line[i] = new Coord(line[i].xCoord + valueIncrease, line[i].yCoord, line[i].zCoord);
+                    break;
+                case axis.y:
+                    line[i] = new Coord(line[i].xCoord, line[i].yCoord + valueIncrease, line[i].zCoord);
+                    break;
+                case axis.z:
+                    line[i] = new Coord(line[i].xCoord, line[i].yCoord, line[i].zCoord + valueIncrease);
+                    break;
+
+            }
+
+        }
+
+        return line;
+
+    }
+
+
+    void DrawSphere(Coord cell)
+    {
+        int radius = Random.Range(_corridorRadius.x, _corridorRadius.y);
+        for (int x = -radius; x < radius; x++)
+        {
+            for (int y = -radius; y < radius; y++)
+            {
+                for (int z = -radius; z < radius; z++)
+                {
+                    if (x * x + y * y+ z*z <= radius * radius)
+                    {
+                        int xToChange = cell.xCoord + x;
+                        int yToChange = cell.yCoord + y;
+                        int zToChange = cell.zCoord + z;
+
+                        if (IsInMap3D(xToChange, yToChange, zToChange))
+                        {
+                            _map3D[xToChange, yToChange,zToChange].state = States.Empty;
+                        }
+                    }
+                }
+            }
+        }
+    }
     protected override void CreateCorridor(Room firstRoom, Room secondRoom, Coord firstRoomCell, Coord secondRoomCell)
     {
         Room.ConnectRooms(firstRoom, secondRoom);
         Vector3 posFirstCell = new Vector3(-_width / 2 + firstRoomCell.xCoord + 0.5f, -_height / 2 + firstRoomCell.yCoord + 0.5f, -_depth / 2 + firstRoomCell.zCoord + 0.5f);
         Vector3 posSecondCell = new Vector3(-_width / 2 + secondRoomCell.xCoord + 0.5f, -_height / 2 + secondRoomCell.yCoord + 0.5f, -_depth / 2 + secondRoomCell.zCoord + 0.5f);
+
+        _map3D[firstRoomCell.xCoord, firstRoomCell.yCoord, firstRoomCell.zCoord].color.g = 1;
+        _map3D[secondRoomCell.xCoord, secondRoomCell.yCoord, secondRoomCell.zCoord].color.g = 1;
         Debug.DrawLine(posFirstCell, posSecondCell, Color.red, 50);
         Debug.Log("ConnectionFound");
+
+        List<Coord> line = GetLine(firstRoomCell, secondRoomCell);
+
+        foreach (Coord cell in line)
+        {
+            DrawSphere(cell);
+        }
     }
 
 

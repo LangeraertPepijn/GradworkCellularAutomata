@@ -156,15 +156,17 @@ MonoBehaviour:
   _randomSeed: Test
   _useRandomSeed: 1
   _MakeEdgesWalls: 1
-  _randomFillPercent: 0.68
+  _randomFillPercent: 0.632
   _sizeThreshold: 5
   _iterations: 6
   _neighbourWallCountToChange: 4
   _neighbourEmptyCountToChange: 4
-  _showWalls: 0
+  _showWalls: 1
   _showEmpty: 1
   _showShell: 0
   _shellEmpty: 1
+  _makeShellSameAsNeighbour: 1
+  _forceAccessibilityFromMainRoom: 1
   _width: 40
   _height: 40
 --- !u!4 &132861040
@@ -403,7 +405,7 @@ MonoBehaviour:
   _randomSeed: 
   _useRandomSeed: 1
   _MakeEdgesWalls: 1
-  _randomFillPercent: 0.621
+  _randomFillPercent: 0.645
   _sizeThreshold: 5
   _iterations: 5
   _neighbourWallCountToChange: 15
@@ -412,9 +414,12 @@ MonoBehaviour:
   _showEmpty: 1
   _showShell: 0
   _shellEmpty: 0
+  _makeShellSameAsNeighbour: 1
+  _forceAccessibilityFromMainRoom: 1
   _width: 20
   _height: 20
   _depth: 20
+  _colorRegions: 1
 --- !u!4 &1198924073
 Transform:
   m_ObjectHideFlags: 0

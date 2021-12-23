@@ -16,6 +16,11 @@ public abstract class MapGenerator : MonoBehaviour
     [SerializeField] protected bool _showEmpty = true;
     [SerializeField] protected bool _showShell = true;
     [SerializeField] protected bool _shellEmpty = true;
+    [SerializeField] protected bool _makeShellSameAsNeighbour = true;
+    [SerializeField] protected bool _forceAccessibilityFromMainRoom = true;
+
+
+    [SerializeField] protected Vector2Int _corridorRadius = new Vector2Int(1,1);
 
     [SerializeField] [Range(1, 50)] protected int _width = 50;
     [SerializeField] [Range(1, 50)] protected int _height = 50;
