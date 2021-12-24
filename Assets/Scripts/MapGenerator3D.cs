@@ -49,7 +49,6 @@ public class MapGenerator3D : MapGenerator
         IterateStates();
         ExamineMap();
         UpdateCubes();
-        GetLine(new Coord(0, 5, 1), new Coord(1, 10, 2));
     }
 
     // remove old cubes
@@ -246,23 +245,35 @@ public class MapGenerator3D : MapGenerator
         {
             Coord cell = queue.Dequeue();
             cells.Add(cell);
-
+            int equalityIndex = 0;
             for (int x = cell.xCoord - 1; x <= cell.xCoord + 1; x++)
             {
+                if (x == cell.xCoord)
+                    ++equalityIndex;
                 for (int y = cell.yCoord - 1; y <= cell.yCoord + 1; y++)
                 {
+                    if (y == cell.yCoord)
+                        ++equalityIndex;
                     for (int z = cell.zCoord - 1; z <= cell.zCoord + 1; z++)
                     {
-                        if (IsInMap3D(x, y, z) && (y == cell.yCoord || x == cell.xCoord || z == cell.zCoord))
+                        if (z == cell.zCoord)
+                            ++equalityIndex;
+                        if (IsInMap3D(x, y, z) &&equalityIndex==2&& mapFlags[x, y, z] == 0 && _map3D[x, y, z].state == cellState)
                         {
-                            if (mapFlags[x, y, z] == 0 && _map3D[x, y, z].state == cellState)
-                            {
+          
                                 mapFlags[x, y, z] = 1;
                                 queue.Enqueue(new Coord(x, y,z));
-                            }
+                            
                         }
+
+                        if (z == cell.zCoord)
+                            --equalityIndex;
                     }
+                    if (y == cell.yCoord)
+                        --equalityIndex;
                 }
+                if (x == cell.xCoord)
+                    --equalityIndex;
             }
         }
 
@@ -395,34 +406,33 @@ public class MapGenerator3D : MapGenerator
                 if (firstRoom == secondRoom || firstRoom.IsConnected(secondRoom))
                     continue;
                 //3 is a var
-                //if (firstRoom.FloorIndex >= secondRoom.RoofIndex+3 || firstRoom.RoofIndex+3 <= secondRoom.FloorIndex)
-                //    continue;
+                if (firstRoom.FloorIndex >= secondRoom.RoofIndex + 3 || firstRoom.RoofIndex + 3 <= secondRoom.FloorIndex)
+                    continue;
                 for (int indexFirstRoom = 0; indexFirstRoom < firstRoom.EdgeCells.Count; indexFirstRoom++)
                 {
-                    if (firstRoom.FloorIndex == firstRoom.EdgeCells[indexFirstRoom].yCoord || firstRoom.RoofIndex == firstRoom.EdgeCells[indexFirstRoom].yCoord)
-                        continue;
-                    //else if (firstRoom.FloorIndex + 0.3f * (firstRoom.RoofIndex - firstRoom.FloorIndex) < firstRoom.EdgeCells[indexFirstRoom].yCoord)
+                    //if (firstRoom.FloorIndex == firstRoom.EdgeCells[indexFirstRoom].yCoord || firstRoom.RoofIndex == firstRoom.EdgeCells[indexFirstRoom].yCoord)
                     //    continue;
+                   /* else*/ if (firstRoom.FloorIndex + 0.3f * (firstRoom.RoofIndex - firstRoom.FloorIndex) < firstRoom.EdgeCells[indexFirstRoom].yCoord)
+                        continue;
                     for (int indexSecondRoom = 0; indexSecondRoom < secondRoom.EdgeCells.Count; indexSecondRoom++)
                     {
 
                         if (secondRoom.FloorIndex == secondRoom.EdgeCells[indexSecondRoom].yCoord || secondRoom.RoofIndex == secondRoom.EdgeCells[indexSecondRoom].yCoord)
                             continue;
-                        //else if ((Vector3Int)secondRoom.EdgeCells[indexSecondRoom] -
-                        //         (Vector3Int)firstRoom.EdgeCells[indexFirstRoom]))
+       
 
 
-                        Vector3 dir = (Vector3Int)secondRoom.EdgeCells[indexSecondRoom] -
-                                          (Vector3Int)firstRoom.EdgeCells[indexFirstRoom];
-                        Vector3 temp = new Vector3(dir.x, 0, dir.z);
+                        Vector3Int dir = (Vector3Int)secondRoom.EdgeCells[indexSecondRoom] - (Vector3Int)firstRoom.EdgeCells[indexFirstRoom];
+                        Vector3Int temp = new Vector3Int(dir.x, 0, dir.z);
+                        //debug
                         var angle = Vector3.Angle(dir, temp);
-                        if (Vector3.Angle(dir, temp)>30)
+                        if (Vector3.Angle(dir, temp)>30||temp.Equals(Vector3Int.zero))
                         {
                             continue;
                         }
+                       // Debug.Log(angle);
 
-                        //if (secondRoom.FloorIndex + 0.3f * (secondRoom.RoofIndex - secondRoom.FloorIndex) < secondRoom.EdgeCells[indexSecondRoom].yCoord)
-                        //    continue;
+          
 
                         float distance = Vector3Int.Distance(firstRoom.EdgeCells[indexFirstRoom], secondRoom.EdgeCells[indexSecondRoom]);
 

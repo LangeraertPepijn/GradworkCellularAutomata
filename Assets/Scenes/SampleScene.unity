@@ -167,6 +167,7 @@ MonoBehaviour:
   _shellEmpty: 1
   _makeShellSameAsNeighbour: 1
   _forceAccessibilityFromMainRoom: 1
+  _corridorRadius: {x: 1, y: 2}
   _width: 40
   _height: 40
 --- !u!4 &132861040
@@ -405,10 +406,10 @@ MonoBehaviour:
   _randomSeed: 
   _useRandomSeed: 1
   _MakeEdgesWalls: 1
-  _randomFillPercent: 0.645
+  _randomFillPercent: 0.572
   _sizeThreshold: 5
   _iterations: 5
-  _neighbourWallCountToChange: 15
+  _neighbourWallCountToChange: 14
   _neighbourEmptyCountToChange: 16
   _showWalls: 0
   _showEmpty: 1
@@ -416,6 +417,7 @@ MonoBehaviour:
   _shellEmpty: 0
   _makeShellSameAsNeighbour: 1
   _forceAccessibilityFromMainRoom: 1
+  _corridorRadius: {x: 1, y: 2}
   _width: 20
   _height: 20
   _depth: 20
