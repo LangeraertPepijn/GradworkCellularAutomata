@@ -34,9 +34,9 @@ public class MapGenerator2D :  MapGenerator
         _stateBuffer = new States[_width, _height];
 
        // if (_useRandomSeed)
-          //  _randomSeed = System.DateTime.Now.ToString();
+          //  _seed = System.DateTime.Now.ToString();
 
-        //_randomNumberGenerator = new System.Random(_randomSeed.GetHashCode());
+        //_randomNumberGenerator = new System.Random(_seed.GetHashCode());
 
         RandomFillMap();
         IterateStates();

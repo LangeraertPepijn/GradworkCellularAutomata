@@ -4,7 +4,7 @@ using UnityEngine;
 public abstract class MapGenerator : MonoBehaviour
 {
     [SerializeField] protected GameObject _cube = null;
-    [SerializeField] protected string _randomSeed;
+    [SerializeField] protected string _seed;
     [SerializeField] protected bool _useRandomSeed;
     [SerializeField] protected bool _MakeEdgesWalls = true;
     [SerializeField] [Range(0, 1)] protected float _randomFillPercent = 0.5f;

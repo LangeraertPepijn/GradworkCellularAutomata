@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -13,6 +14,7 @@ public class MapGenerator3D : MapGenerator
 
     [CanBeNull] private Cell[,,] _map3D;
     private States[,,] _stateBuffer3D;
+    private System.Random _randomNumberGenerator = null;
 
     //3D code
 
@@ -38,10 +40,10 @@ public class MapGenerator3D : MapGenerator
         _stateBuffer3D = new States[_width, _height, _depth];
 
 
-        // if (_useRandomSeed)
-        //  _randomSeed = System.DateTime.Now.ToString();
+ 
 
-        // _randomNumberGenerator = new System.Random(_randomSeed.GetHashCode());
+        if (!_useRandomSeed)
+            _randomNumberGenerator = new System.Random(_seed.GetHashCode());
 
 
 
@@ -49,6 +51,11 @@ public class MapGenerator3D : MapGenerator
         IterateStates();
         ExamineMap();
         UpdateCubes();
+
+        MeshGenerator meshGenerator =GetComponent<MeshGenerator>();
+
+        if(meshGenerator)
+            meshGenerator.GenerateMesh(_map3D,1);
     }
 
     // remove old cubes
@@ -106,7 +113,7 @@ public class MapGenerator3D : MapGenerator
         return wallcount;
     }
 
-
+  
     // Fill the map with random values based on the RandomFill Percent
     protected override void RandomFillMap()
     {
@@ -123,12 +130,14 @@ public class MapGenerator3D : MapGenerator
                     }
                     else
                     {
+                        if(_useRandomSeed)
                         _map3D[x, y, z].state = (Random.Range(0, 1.0f) < _randomFillPercent)
                             ? States.Wall
                             : States.Empty;
-                        //_map3D[x, y, z].state = (_randomNumberGenerator.Next(0, 100) / 100.0f < _randomFillPercent)
-                        //? States.Wall
-                        //: States.Empty;
+                        else
+                            _map3D[x, y, z].state = (_randomNumberGenerator.Next(0, 100) / 100.0f < _randomFillPercent)
+                            ? States.Wall
+                            : States.Empty;
 
                     }
                 }
@@ -406,20 +415,22 @@ public class MapGenerator3D : MapGenerator
                 if (firstRoom == secondRoom || firstRoom.IsConnected(secondRoom))
                     continue;
                 //3 is a var
-                if (firstRoom.FloorIndex >= secondRoom.RoofIndex + 3 || firstRoom.RoofIndex + 3 <= secondRoom.FloorIndex)
-                    continue;
+                //if (firstRoom.FloorIndex >= secondRoom.RoofIndex + 3 || firstRoom.RoofIndex + 3 <= secondRoom.FloorIndex)
+                //    continue;
                 for (int indexFirstRoom = 0; indexFirstRoom < firstRoom.EdgeCells.Count; indexFirstRoom++)
                 {
                     //if (firstRoom.FloorIndex == firstRoom.EdgeCells[indexFirstRoom].yCoord || firstRoom.RoofIndex == firstRoom.EdgeCells[indexFirstRoom].yCoord)
                     //    continue;
-                   /* else*/ if (firstRoom.FloorIndex + 0.3f * (firstRoom.RoofIndex - firstRoom.FloorIndex) < firstRoom.EdgeCells[indexFirstRoom].yCoord)
+                    /* else*/
+                    if (firstRoom.FloorIndex + 0.3f * (firstRoom.RoofIndex - firstRoom.FloorIndex) < firstRoom.EdgeCells[indexFirstRoom].yCoord)
                         continue;
                     for (int indexSecondRoom = 0; indexSecondRoom < secondRoom.EdgeCells.Count; indexSecondRoom++)
                     {
 
-                        if (secondRoom.FloorIndex == secondRoom.EdgeCells[indexSecondRoom].yCoord || secondRoom.RoofIndex == secondRoom.EdgeCells[indexSecondRoom].yCoord)
+                        //if (secondRoom.FloorIndex == secondRoom.EdgeCells[indexSecondRoom].yCoord || secondRoom.RoofIndex == secondRoom.EdgeCells[indexSecondRoom].yCoord)
+                        //    continue;
+                        if (secondRoom.FloorIndex + 0.3f * (secondRoom.RoofIndex - secondRoom.FloorIndex) < secondRoom.EdgeCells[indexSecondRoom].yCoord)
                             continue;
-       
 
 
                         Vector3Int dir = (Vector3Int)secondRoom.EdgeCells[indexSecondRoom] - (Vector3Int)firstRoom.EdgeCells[indexFirstRoom];
@@ -483,85 +494,98 @@ public class MapGenerator3D : MapGenerator
         int dy = to.yCoord - from.yCoord;
         int dz = to.zCoord - from.zCoord;
 
-        bool inverted = false;
 
-        int step = Math.Sign(dx);
-        int gradientStep = Math.Sign(dy);
- 
+        int step = 0;
+        int gradientStep = 0;
+        int extraStep = 0;
+        
+        int longest=Mathf.Max(Math.Abs(dx), Math.Abs(dy), Math.Abs(dz));
+        int shortest = 0;
+        int extra = 0;
 
-        int longest = Math.Abs(dx);
-        longest=Mathf.Max(Math.Abs(dx), Math.Abs(dy), Math.Abs(dz));
-        int shortest = Math.Abs(dy);
         Enum test = axis.x;
         Enum longestAxis = axis.x;
         Enum shortestAxis = axis.x;
-        int extra = 0;
+
         if (longest == Math.Abs(dx))
         {
             longestAxis = axis.x;
-            shortest=Mathf.Max( Math.Abs(dy), Math.Abs(dz));
+            shortest=Mathf.Min( Math.Abs(dy), Math.Abs(dz));
             if (shortest == Math.Abs(dy))
             {
                 shortestAxis = axis.y;
                 step = Math.Sign(dx);
                 gradientStep = Math.Sign(dy);
+                extraStep = Math.Sign(dz);
                 test = axis.z;
-                extra = dz;
+                extra = Math.Abs(dz);
+               
             }
             else
             {
                 shortestAxis = axis.z;
                 step = Math.Sign(dx);
                 gradientStep = Math.Sign(dz);
+                extraStep = Math.Sign(dy);
                 test = axis.y;
-                extra = dy;
+                extra = Math.Abs(dy);
+                
             }
         }
         else if (longest == Math.Abs(dy))
         {
             longestAxis = axis.y;
-            shortest=Mathf.Max( Math.Abs(dx), Math.Abs(dz));
+            shortest=Mathf.Min( Math.Abs(dx), Math.Abs(dz));
             if (shortest == Math.Abs(dz))
             {
                 step = Math.Sign(dy);
                 gradientStep = Math.Sign(dz);
+                extraStep = Math.Sign(dx);
                 shortestAxis = axis.z;
                 test = axis.x;
-                extra = dx;
+                extra = Math.Abs(dx);
+              
             }
             else
             {
+                extraStep = Math.Sign(dz);
                 step = Math.Sign(dy);
                 gradientStep = Math.Sign(dx);
                 shortestAxis = axis.x;
                 test = axis.z;
-                extra = dz;
+                extra = Math.Abs(dz);
+           
             }
         }
         else
         {
             longestAxis = axis.z;
-            shortest=Mathf.Max( Math.Abs(dy), Math.Abs(dx));
+            shortest=Mathf.Min( Math.Abs(dy), Math.Abs(dx));
             if (shortest == Math.Abs(dy))
             {
+                extraStep = Math.Sign(dx);
                 step = Math.Sign(dz);
                 gradientStep = Math.Sign(dy);
                 shortestAxis = axis.y;
                 test = axis.x;
-                extra = dx;
+                extra = Math.Abs(dx);
+            
             }
             else
             {
+                extraStep = Math.Sign(dy);
                 step = Math.Sign(dz);
                 gradientStep = Math.Sign(dx);
                 shortestAxis = axis.x;
                 test = axis.y;
-                extra = dy;
+                extra = Math.Abs(dy);
+               
             }
         }
         
 
         int gradientAccumulation = longest / 2;
+        int extraGradientAccumulation = longest / 2;
         for (int i = 0; i < longest; i++)
         {
             line.Add(new Coord(x, y,z));
@@ -569,11 +593,9 @@ public class MapGenerator3D : MapGenerator
             switch (longestAxis)
             {
                 case axis.x:
-                    // code block
                     x += step;
                     break;
                 case axis.y:
-                    // code block
                     y += step;
                     break;
                 case axis.z:
@@ -589,11 +611,11 @@ public class MapGenerator3D : MapGenerator
                 switch (shortestAxis)
                 {
                     case axis.x:
-                        // code block
+                     
                         x += gradientStep;
                         break;
                     case axis.y:
-                        // code block
+                      
                         y += gradientStep;
                         break;
                     case axis.z:
@@ -605,34 +627,32 @@ public class MapGenerator3D : MapGenerator
                 gradientAccumulation -= longest;
             }
 
+            extraGradientAccumulation += extra;
+            if (extraGradientAccumulation >= longest)
+            {
+
+                switch (test)
+                {
+                    case axis.x:
+                        x += extraStep;
+                        break;
+                    case axis.y:
+                        y += extraStep;
+                        break;
+                    case axis.z:
+                        z += extraStep;
+                        break;
+
+                }
+
+                extraGradientAccumulation -= longest;
+            }
+
+
         }
 
 
-        int valueIncrease = 0;
-        for (int i = 0; i < line.Count; i++)
-        {
 
-            int value = (i + 1) * extra / line.Count;
-            if (Math.Abs(value) > valueIncrease)
-            {
-                valueIncrease = value;
-            }
-
-            switch (test)
-            {
-                case axis.x:
-                    line[i] = new Coord(line[i].xCoord + valueIncrease, line[i].yCoord, line[i].zCoord);
-                    break;
-                case axis.y:
-                    line[i] = new Coord(line[i].xCoord, line[i].yCoord + valueIncrease, line[i].zCoord);
-                    break;
-                case axis.z:
-                    line[i] = new Coord(line[i].xCoord, line[i].yCoord, line[i].zCoord + valueIncrease);
-                    break;
-
-            }
-
-        }
 
         return line;
 
@@ -683,6 +703,153 @@ public class MapGenerator3D : MapGenerator
     }
 
 
+    private List<Cube> CreateCubes()
+    {
+        List<Cube> cubes = new List<Cube>();
+
+
+        
+
+
+        return cubes;
+    }
+
+    private void testCube()
+    {
+        int cubeIndex = 0;
+
+        for (int i = 0; i < 8; i++)
+        {
+            if (_map3D[0, 0, 0].state == States.Wall)
+            {
+                cubeIndex = 1 << i;
+            }
+        }
+    }
+    //private void MarchingSquares()
+    //{
+
+    //    for (int x = 0; x < _width; x++)
+    //    {
+    //        for (int y = 0; y < _height; y++)
+    //        {
+    //            for (int z = 0; z < _depth; z++)
+    //            {
+    //                CalcWallIndices(x,y,z);
+    //                NextStep(x,y,z);
+    //            }
+    //        }
+    //    }
+    //}
+
+    //private void NextStep(int x, int y, int z)
+    //{
+    //    int cubeIndex=0;
+    //    for (int i = 0; i < 8; i++)
+    //    {
+    //        if (_map3D[x, y, z].index[i] > 0)
+    //        {
+    //            cubeIndex = 1 << i;
+    //        }
+
+
+    //        for (int j = 0; j < 16; j++)
+    //        {
+    //            int t =Table.TriTable[i, j];
+
+    //            int indexA = Table.cornerIndexAFromEdge[t];
+    //            int indexB = Table.cornerIndexBFromEdge[t];
+    //            Vector3 vertexPos= (cube)
+    //        }
+    //    }
+    //}
+
+    //private Vector3 GetCorner(int xCoord, int yCoord, int zCoord)
+    //{
+    //    int counter = 0;
+    //    for (int x = xCoord - 1; x <= xCoord + 1; x++)
+    //    {
+    //        if (x == xCoord)
+    //            ++equalityIndex;
+    //        for (int y = yCoord - 1; y <= yCoord + 1; y++)
+    //        {
+    //            if (y == yCoord)
+    //                ++equalityIndex;
+    //            for (int z = zCoord - 1; z <= zCoord + 1; z++)
+    //            {
+    //                if (z == zCoord)
+    //                    ++equalityIndex;
+    //                ////State wall Might need to be state Empty
+    //                ////State wall Might need to be state Empty
+    //                ////State wall Might need to be state Empty
+    //                ////State wall Might need to be state Empty
+    //                ////State wall Might need to be state Empty
+    //                ////State wall Might need to be state Empty
+    //                ////State wall Might need to be state Empty
+    //                if (IsInMap3D(x, y, z) && equalityIndex == 2 && _map3D[x, y, z].state == States.Wall)
+    //                {
+
+    //                    _map3D[x, y, z].index[i] = 1;
+
+    //                }
+    //                i++;
+
+    //                if (z == zCoord)
+    //                    --equalityIndex;
+    //            }
+    //            if (y == yCoord)
+    //                --equalityIndex;
+    //        }
+    //        if (x == xCoord)
+    //            --equalityIndex;
+    //    }
+    //}
+
+    //private void CalcWallIndices(int xCoord,int yCoord,int zCoord)
+    //{
+    //    int i = 0;
+    //    int equalityIndex = 0;
+
+    //    for (int x =  xCoord- 1; x <= xCoord + 1; x++)
+    //    {
+    //        if (x == xCoord)
+    //            ++equalityIndex;
+    //        for (int y = yCoord - 1; y <= yCoord + 1; y++)
+    //        {
+    //            if (y == yCoord)
+    //                ++equalityIndex;
+    //            for (int z = zCoord - 1; z <= zCoord + 1; z++)
+    //            {
+    //                if (z == zCoord)
+    //                    ++equalityIndex;
+    //                ////State wall Might need to be state Empty
+    //                ////State wall Might need to be state Empty
+    //                ////State wall Might need to be state Empty
+    //                ////State wall Might need to be state Empty
+    //                ////State wall Might need to be state Empty
+    //                ////State wall Might need to be state Empty
+    //                ////State wall Might need to be state Empty
+    //                if (IsInMap3D(x, y, z) && equalityIndex == 2 && _map3D[x, y, z].state == States.Wall)
+    //                {
+
+    //                    _map3D[x, y, z].index[i] = 1;
+
+    //                }
+    //                i++;
+
+    //                if (z == zCoord)
+    //                    --equalityIndex;
+    //            }
+    //            if (y == yCoord)
+    //                --equalityIndex;
+    //        }
+    //        if (x == xCoord)
+    //            --equalityIndex;
+    //    }
+
+
+    //}
+
     protected override void UpdateCubes()
     {
         for (int x = 0; x < _width; x++)
@@ -717,8 +884,8 @@ public class MapGenerator3D : MapGenerator
                     }
                     else
                     {
-                        Vector3 pos = new Vector3(-_width / 2 + x + 0.5f, -_height / 2 + y + 0.5f,
-                            -_depth / 2 + z + 0.5f);
+                        Vector3 pos = new Vector3(-_width / 2 + x , -_height / 2 + y ,
+                            -_depth / 2 + z );
                         _map3D[x, y, z].mesh = Instantiate(_cube);
                         _map3D[x, y, z].mesh.transform.position = pos;
 
