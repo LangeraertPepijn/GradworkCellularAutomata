@@ -1,13 +1,18 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.IO.MemoryMappedFiles;
 using UnityEngine;
 
 public enum States : int
 {
     Empty = 0,
     Wall = 1
+}
+
+public enum Axis
+{
+    x = 0,
+    y = 1,
+    z = 2
 }
 
 public struct Cell
@@ -99,14 +104,16 @@ public class Room : IComparable<Room>
         _edgeCells = new List<Coord>();
         foreach (Coord cell in roomCells)
         {
+            if (_roofIndex < cell.yCoord)
+                _roofIndex = cell.yCoord;
+            if (_floorIndex > cell.yCoord)
+                _floorIndex = cell.yCoord;
+
             for (int x = cell.xCoord - 1; x <= cell.xCoord + 1; x++)
             {
                 for (int y = cell.yCoord - 1; y <= cell.yCoord + 1; y++)
                 {
-                    if (_roofIndex < y)
-                        _roofIndex = y;
-                    else if (_floorIndex > y)
-                        _floorIndex = y;
+    
                     for (int z = cell.zCoord - 1; z <= cell.zCoord + 1; z++)
                     {
                         if (x >= 0 && x < map.GetLength(0) && y >= 0 && y < map.GetLength(1) && z >= 0 &&
@@ -266,21 +273,17 @@ public class Node
 public class ControlNode:Node
 {
 
-
-    public Vector3 position;
-    public int vertexIndex;
+   
     public States state;
     public Node above, right, front;
 
     public ControlNode(Vector3 pos, States stateInit,float size):base(pos)
     {
-        position = pos;
         above = new Node(pos + Vector3.forward * size / 2f);
         front = new Node(pos + Vector3.up * size / 2f);
         right = new Node(pos + Vector3.right * size / 2f);
 
         state = stateInit;
-        vertexIndex = -1;
 
     }
 }
@@ -548,39 +551,8 @@ public class Table
         { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 }
     };
 
-    public static readonly int[] cornerIndexAFromEdge = new int[12]
-    {
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7,
-        0,
-        1,
-        2,
-        3
-    };
-
-    public static readonly int[] cornerIndexBFromEdge = new int [12]
-    {
-        1,
-        2,
-        3,
-        0,
-        5,
-        6,
-        7,
-        4,
-        4,
-        5,
-        6,
-        7
-    };
-
 }
+
 public static class Extensions
 {
     public static int [] SubArray(this int[,] array, int offset, int length)
@@ -595,6 +567,7 @@ public static class Extensions
         return result;
     }
 }
+
 public class CubeGrid
 {
     public Cube[,,] cubes;

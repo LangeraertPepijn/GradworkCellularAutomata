@@ -11,6 +11,7 @@ public class MapGenerator3D : MapGenerator
 
     [SerializeField] [Range(1, 50)] private int _depth = 50;
     [SerializeField] private bool _colorRegions = true;
+    [SerializeField] private bool _generateMesh = true;
 
     [CanBeNull] private Cell[,,] _map3D;
     private States[,,] _stateBuffer3D;
@@ -52,12 +53,20 @@ public class MapGenerator3D : MapGenerator
         RandomFillMap();
         IterateStates();
         ExamineMap();
-        UpdateCubes();
+        if (_generateMesh)
+        {
 
-        MeshGenerator meshGenerator =GetComponent<MeshGenerator>();
+            MeshGenerator meshGenerator = GetComponent<MeshGenerator>();
+            if (meshGenerator)
+                meshGenerator.GenerateMesh(_map3D, 1);
+        }
+        else
+        {
+            UpdateCubes();
+        }
 
-        if(meshGenerator)
-            meshGenerator.GenerateMesh(_map3D,1);
+
+
     }
 
     // remove old cubes
@@ -193,7 +202,6 @@ public class MapGenerator3D : MapGenerator
                 }
             }
         }
-        Debug.Log("The amount of walls changed is" + w + "the amount of empty added is" + e);
 
     }
 
@@ -422,14 +430,14 @@ public class MapGenerator3D : MapGenerator
                     //if (firstRoom.FloorIndex == firstRoom.EdgeCells[indexFirstRoom].yCoord || firstRoom.RoofIndex == firstRoom.EdgeCells[indexFirstRoom].yCoord)
                     //    continue;
                     /* else*/
-                    if (firstRoom.FloorIndex + 0.3f * (firstRoom.RoofIndex - firstRoom.FloorIndex) < firstRoom.EdgeCells[indexFirstRoom].yCoord)
+                    if ( firstRoom.FloorIndex + 0.3f * (firstRoom.RoofIndex - firstRoom.FloorIndex) < firstRoom.EdgeCells[indexFirstRoom].yCoord)
                         continue;
                     for (int indexSecondRoom = 0; indexSecondRoom < secondRoom.EdgeCells.Count; indexSecondRoom++)
                     {
 
                         //if (secondRoom.FloorIndex == secondRoom.EdgeCells[indexSecondRoom].yCoord || secondRoom.RoofIndex == secondRoom.EdgeCells[indexSecondRoom].yCoord)
                         //    continue;
-                        if (secondRoom.FloorIndex + 0.3f * (secondRoom.RoofIndex - secondRoom.FloorIndex) < secondRoom.EdgeCells[indexSecondRoom].yCoord)
+                        if ( secondRoom.FloorIndex + 0.3f * (secondRoom.RoofIndex - secondRoom.FloorIndex) < secondRoom.EdgeCells[indexSecondRoom].yCoord)
                             continue;
 
 
@@ -441,9 +449,8 @@ public class MapGenerator3D : MapGenerator
                         {
                             continue;
                         }
-                       // Debug.Log(angle);
 
-          
+
 
                         float distance = Vector3Int.Distance(firstRoom.EdgeCells[indexFirstRoom], secondRoom.EdgeCells[indexSecondRoom]);
 
@@ -475,13 +482,7 @@ public class MapGenerator3D : MapGenerator
     }
 
 
-    public enum axis 
-    {
-        x = 0,
-        y = 1,
-        z = 2
-    }
-
+    // calculates a line from one part coord to the other and returns a list of coordinates which are part of that line
     List<Coord> GetLine(Coord from, Coord to)
     {
         List<Coord> line = new List<Coord>();
@@ -503,84 +504,84 @@ public class MapGenerator3D : MapGenerator
         int shortest = 0;
         int extra = 0;
 
-        Enum test = axis.x;
-        Enum longestAxis = axis.x;
-        Enum shortestAxis = axis.x;
+        Enum test = Axis.x;
+        Enum longestAxis = Axis.x;
+        Enum shortestAxis = Axis.x;
 
         if (longest == Math.Abs(dx))
         {
-            longestAxis = axis.x;
-            shortest=Mathf.Min( Math.Abs(dy), Math.Abs(dz));
-            if (shortest == Math.Abs(dy))
+            longestAxis = Axis.x;
+            shortest=/*Mathf.Min( */Math.Abs(dy)/*, Math.Abs(dz))*/;
+            //if (shortest == Math.Abs(dy))
             {
-                shortestAxis = axis.y;
+                shortestAxis = Axis.y;
                 step = Math.Sign(dx);
                 gradientStep = Math.Sign(dy);
                 extraStep = Math.Sign(dz);
-                test = axis.z;
+                test = Axis.z;
                 extra = Math.Abs(dz);
                
             }
-            else
-            {
-                shortestAxis = axis.z;
-                step = Math.Sign(dx);
-                gradientStep = Math.Sign(dz);
-                extraStep = Math.Sign(dy);
-                test = axis.y;
-                extra = Math.Abs(dy);
+           // else
+           // {
+            //    shortestAxis = Axis.z;
+            //    step = Math.Sign(dx);
+            //    gradientStep = Math.Sign(dz);
+            //    extraStep = Math.Sign(dy);
+            //    test = Axis.y;
+            //    extra = Math.Abs(dy);
                 
-            }
+            //}
         }
         else if (longest == Math.Abs(dy))
         {
-            longestAxis = axis.y;
-            shortest=Mathf.Min( Math.Abs(dx), Math.Abs(dz));
-            if (shortest == Math.Abs(dz))
-            {
+            longestAxis = Axis.y;
+            shortest=/*Mathf.Min( Math.Abs(dx), */Math.Abs(dz)/*)*/;
+            //if (shortest == Math.Abs(dz))
+           // {
                 step = Math.Sign(dy);
                 gradientStep = Math.Sign(dz);
                 extraStep = Math.Sign(dx);
-                shortestAxis = axis.z;
-                test = axis.x;
+                shortestAxis = Axis.z;
+                test = Axis.x;
                 extra = Math.Abs(dx);
               
-            }
-            else
-            {
-                extraStep = Math.Sign(dz);
-                step = Math.Sign(dy);
-                gradientStep = Math.Sign(dx);
-                shortestAxis = axis.x;
-                test = axis.z;
-                extra = Math.Abs(dz);
+           // }
+            //else
+            //{
+            //    extraStep = Math.Sign(dz);
+            //    step = Math.Sign(dy);
+            //    gradientStep = Math.Sign(dx);
+            //    shortestAxis = Axis.x;
+            //    test = Axis.z;
+            //    extra = Math.Abs(dz);
            
-            }
+            //}
         }
         else
         {
-            longestAxis = axis.z;
-            shortest=Mathf.Min( Math.Abs(dy), Math.Abs(dx));
-            if (shortest == Math.Abs(dy))
-            {
+            longestAxis = Axis.z;
+            shortest=/*Mathf.Min( */Math.Abs(dy)/*, Math.Abs(dx))*/;
+           // if (shortest == Math.Abs(dy))
+           // {
                 extraStep = Math.Sign(dx);
                 step = Math.Sign(dz);
                 gradientStep = Math.Sign(dy);
-                shortestAxis = axis.y;
-                test = axis.x;
+                shortestAxis = Axis.y;
+                test = Axis.x;
                 extra = Math.Abs(dx);
             
-            }
-            else
-            {
-                extraStep = Math.Sign(dy);
-                step = Math.Sign(dz);
-                gradientStep = Math.Sign(dx);
-                shortestAxis = axis.x;
-                test = axis.y;
-                extra = Math.Abs(dy);
+            //}
+            //else
+            //{
+            //    extraStep = Math.Sign(dy);
+            //    step = Math.Sign(dz);
+            //    gradientStep = Math.Sign(dx);
+            //    shortestAxis = Axis.x;
+            //    test = Axis.y;
+            //    extra = Math.Abs(dy);
                
-            }
+            //}
         }
         
 
@@ -592,13 +593,13 @@ public class MapGenerator3D : MapGenerator
 
             switch (longestAxis)
             {
-                case axis.x:
+                case Axis.x:
                     x += step;
                     break;
-                case axis.y:
+                case Axis.y:
                     y += step;
                     break;
-                case axis.z:
+                case Axis.z:
                     z += step;
                     break;
 
@@ -610,15 +611,15 @@ public class MapGenerator3D : MapGenerator
 
                 switch (shortestAxis)
                 {
-                    case axis.x:
+                    case Axis.x:
                      
                         x += gradientStep;
                         break;
-                    case axis.y:
+                    case Axis.y:
                       
                         y += gradientStep;
                         break;
-                    case axis.z:
+                    case Axis.z:
                         z += gradientStep;
                         break;
 
@@ -633,13 +634,13 @@ public class MapGenerator3D : MapGenerator
 
                 switch (test)
                 {
-                    case axis.x:
+                    case Axis.x:
                         x += extraStep;
                         break;
-                    case axis.y:
+                    case Axis.y:
                         y += extraStep;
                         break;
-                    case axis.z:
+                    case Axis.z:
                         z += extraStep;
                         break;
 
@@ -658,7 +659,7 @@ public class MapGenerator3D : MapGenerator
 
     }
 
-
+    // changes the cells in a radius to empty
     void DrawSphere(Coord cell)
     {
         int radius = Random.Range(_corridorRadius.x, _corridorRadius.y);
@@ -683,6 +684,8 @@ public class MapGenerator3D : MapGenerator
             }
         }
     }
+
+    //creates a corridor in between two rooms 
     protected override void CreateCorridor(Room firstRoom, Room secondRoom, Coord firstRoomCell, Coord secondRoomCell)
     {
         Room.ConnectRooms(firstRoom, secondRoom);
@@ -701,154 +704,6 @@ public class MapGenerator3D : MapGenerator
             DrawSphere(cell);
         }
     }
-
-
-    private List<Cube> CreateCubes()
-    {
-        List<Cube> cubes = new List<Cube>();
-
-
-        
-
-
-        return cubes;
-    }
-
-    private void testCube()
-    {
-        int cubeIndex = 0;
-
-        for (int i = 0; i < 8; i++)
-        {
-            if (_map3D[0, 0, 0].state == States.Wall)
-            {
-                cubeIndex = 1 << i;
-            }
-        }
-    }
-    //private void MarchingSquares()
-    //{
-
-    //    for (int x = 0; x < _width; x++)
-    //    {
-    //        for (int y = 0; y < _height; y++)
-    //        {
-    //            for (int z = 0; z < _depth; z++)
-    //            {
-    //                CalcWallIndices(x,y,z);
-    //                NextStep(x,y,z);
-    //            }
-    //        }
-    //    }
-    //}
-
-    //private void NextStep(int x, int y, int z)
-    //{
-    //    int cubeIndex=0;
-    //    for (int i = 0; i < 8; i++)
-    //    {
-    //        if (_map3D[x, y, z].index[i] > 0)
-    //        {
-    //            cubeIndex = 1 << i;
-    //        }
-
-
-    //        for (int j = 0; j < 16; j++)
-    //        {
-    //            int t =Table.TriTable[i, j];
-
-    //            int indexA = Table.cornerIndexAFromEdge[t];
-    //            int indexB = Table.cornerIndexBFromEdge[t];
-    //            Vector3 vertexPos= (cube)
-    //        }
-    //    }
-    //}
-
-    //private Vector3 GetCorner(int xCoord, int yCoord, int zCoord)
-    //{
-    //    int counter = 0;
-    //    for (int x = xCoord - 1; x <= xCoord + 1; x++)
-    //    {
-    //        if (x == xCoord)
-    //            ++equalityIndex;
-    //        for (int y = yCoord - 1; y <= yCoord + 1; y++)
-    //        {
-    //            if (y == yCoord)
-    //                ++equalityIndex;
-    //            for (int z = zCoord - 1; z <= zCoord + 1; z++)
-    //            {
-    //                if (z == zCoord)
-    //                    ++equalityIndex;
-    //                ////State wall Might need to be state Empty
-    //                ////State wall Might need to be state Empty
-    //                ////State wall Might need to be state Empty
-    //                ////State wall Might need to be state Empty
-    //                ////State wall Might need to be state Empty
-    //                ////State wall Might need to be state Empty
-    //                ////State wall Might need to be state Empty
-    //                if (IsInMap3D(x, y, z) && equalityIndex == 2 && _map3D[x, y, z].state == States.Wall)
-    //                {
-
-    //                    _map3D[x, y, z].index[i] = 1;
-
-    //                }
-    //                i++;
-
-    //                if (z == zCoord)
-    //                    --equalityIndex;
-    //            }
-    //            if (y == yCoord)
-    //                --equalityIndex;
-    //        }
-    //        if (x == xCoord)
-    //            --equalityIndex;
-    //    }
-    //}
-
-    //private void CalcWallIndices(int xCoord,int yCoord,int zCoord)
-    //{
-    //    int i = 0;
-    //    int equalityIndex = 0;
-
-    //    for (int x =  xCoord- 1; x <= xCoord + 1; x++)
-    //    {
-    //        if (x == xCoord)
-    //            ++equalityIndex;
-    //        for (int y = yCoord - 1; y <= yCoord + 1; y++)
-    //        {
-    //            if (y == yCoord)
-    //                ++equalityIndex;
-    //            for (int z = zCoord - 1; z <= zCoord + 1; z++)
-    //            {
-    //                if (z == zCoord)
-    //                    ++equalityIndex;
-    //                ////State wall Might need to be state Empty
-    //                ////State wall Might need to be state Empty
-    //                ////State wall Might need to be state Empty
-    //                ////State wall Might need to be state Empty
-    //                ////State wall Might need to be state Empty
-    //                ////State wall Might need to be state Empty
-    //                ////State wall Might need to be state Empty
-    //                if (IsInMap3D(x, y, z) && equalityIndex == 2 && _map3D[x, y, z].state == States.Wall)
-    //                {
-
-    //                    _map3D[x, y, z].index[i] = 1;
-
-    //                }
-    //                i++;
-
-    //                if (z == zCoord)
-    //                    --equalityIndex;
-    //            }
-    //            if (y == yCoord)
-    //                --equalityIndex;
-    //        }
-    //        if (x == xCoord)
-    //            --equalityIndex;
-    //    }
-
-
-    //}
 
     protected override void UpdateCubes()
     {

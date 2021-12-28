@@ -9,12 +9,14 @@ public class MeshGenerator : MonoBehaviour
 {
     private CubeGrid _cubeGrid;
 
-    private List<Vector3> _vertices=new List<Vector3>();
-    private List<int> _triangles=new List<int>();
+    private List<Vector3> _vertexBuffer=new List<Vector3>();
+    private List<int> _indexBuffer=new List<int>();
 
     public void GenerateMesh(Cell[,,] map, float size)
     {
         _cubeGrid = new CubeGrid(map, size);
+        _vertexBuffer = new List<Vector3>();
+        _indexBuffer = new List<int>();
 
         for (int x = 0; x < _cubeGrid.cubes.GetLength(0); x++)
         {
@@ -31,49 +33,49 @@ public class MeshGenerator : MonoBehaviour
 
         GetComponent<MeshFilter>().mesh = mesh;
 
-        mesh.vertices = _vertices.ToArray();
-        mesh.triangles = _triangles.ToArray();
+        mesh.vertices = _vertexBuffer.ToArray();
+        mesh.triangles = _indexBuffer.ToArray();
         mesh.RecalculateNormals();
     }
 
-    private void OnDrawGizmos()
-    {
-        if (_cubeGrid != null)
-        {
-            for (int x = 0; x < _cubeGrid.cubes.GetLength(0); x++)
-            {
-                for (int y = 0; y < _cubeGrid.cubes.GetLength(1); y++)
-                {
-                    for (int z = 0; z < _cubeGrid.cubes.GetLength(2); z++)
-                    {
-                        Gizmos.color = (_cubeGrid.cubes[x, y, z].GetCorner(0).state==States.Wall) ? Color.black: Color.white;
-                        Gizmos.DrawCube(_cubeGrid.cubes[x,y,z].GetCorner(0).position,Vector3.one*0.1f);
+    //private void OnDrawGizmos()
+    //{
+    //    if (_cubeGrid != null)
+    //    {
+    //        for (int x = 0; x < _cubeGrid.cubes.GetLength(0); x++)
+    //        {
+    //            for (int y = 0; y < _cubeGrid.cubes.GetLength(1); y++)
+    //            {
+    //                for (int z = 0; z < _cubeGrid.cubes.GetLength(2); z++)
+    //                {
+    //                    Gizmos.color = (_cubeGrid.cubes[x, y, z].GetCorner(0).state==States.Wall) ? Color.black: Color.white;
+    //                    Gizmos.DrawCube(_cubeGrid.cubes[x,y,z].GetCorner(0).position,Vector3.one*0.1f);
 
-                        Gizmos.color = (_cubeGrid.cubes[x, y, z].GetCorner(1).state == States.Wall) ? Color.black : Color.white;
-                        Gizmos.DrawCube(_cubeGrid.cubes[x, y, z].GetCorner(1).position, Vector3.one * 0.1f);
+    //                    Gizmos.color = (_cubeGrid.cubes[x, y, z].GetCorner(1).state == States.Wall) ? Color.black : Color.white;
+    //                    Gizmos.DrawCube(_cubeGrid.cubes[x, y, z].GetCorner(1).position, Vector3.one * 0.1f);
 
-                        Gizmos.color = (_cubeGrid.cubes[x, y, z].GetCorner(2).state == States.Wall) ? Color.black : Color.white;
-                        Gizmos.DrawCube(_cubeGrid.cubes[x, y, z].GetCorner(2).position, Vector3.one * 0.1f);
+    //                    Gizmos.color = (_cubeGrid.cubes[x, y, z].GetCorner(2).state == States.Wall) ? Color.black : Color.white;
+    //                    Gizmos.DrawCube(_cubeGrid.cubes[x, y, z].GetCorner(2).position, Vector3.one * 0.1f);
 
-                        Gizmos.color = (_cubeGrid.cubes[x, y, z].GetCorner(3).state == States.Wall) ? Color.black : Color.white;
-                        Gizmos.DrawCube(_cubeGrid.cubes[x, y, z].GetCorner(3).position, Vector3.one * 0.1f);
+    //                    Gizmos.color = (_cubeGrid.cubes[x, y, z].GetCorner(3).state == States.Wall) ? Color.black : Color.white;
+    //                    Gizmos.DrawCube(_cubeGrid.cubes[x, y, z].GetCorner(3).position, Vector3.one * 0.1f);
 
-                        Gizmos.color = (_cubeGrid.cubes[x, y, z].GetCorner(4).state == States.Wall) ? Color.black : Color.white;
-                        Gizmos.DrawCube(_cubeGrid.cubes[x, y, z].GetCorner(4).position, Vector3.one * 0.1f);
+    //                    Gizmos.color = (_cubeGrid.cubes[x, y, z].GetCorner(4).state == States.Wall) ? Color.black : Color.white;
+    //                    Gizmos.DrawCube(_cubeGrid.cubes[x, y, z].GetCorner(4).position, Vector3.one * 0.1f);
 
-                        Gizmos.color = (_cubeGrid.cubes[x, y, z].GetCorner(5).state == States.Wall) ? Color.black : Color.white;
-                        Gizmos.DrawCube(_cubeGrid.cubes[x, y, z].GetCorner(5).position, Vector3.one * 0.1f);
+    //                    Gizmos.color = (_cubeGrid.cubes[x, y, z].GetCorner(5).state == States.Wall) ? Color.black : Color.white;
+    //                    Gizmos.DrawCube(_cubeGrid.cubes[x, y, z].GetCorner(5).position, Vector3.one * 0.1f);
 
-                        Gizmos.color = (_cubeGrid.cubes[x, y, z].GetCorner(6).state == States.Wall) ? Color.black : Color.white;
-                        Gizmos.DrawCube(_cubeGrid.cubes[x, y, z].GetCorner(6).position, Vector3.one * 0.1f);
+    //                    Gizmos.color = (_cubeGrid.cubes[x, y, z].GetCorner(6).state == States.Wall) ? Color.black : Color.white;
+    //                    Gizmos.DrawCube(_cubeGrid.cubes[x, y, z].GetCorner(6).position, Vector3.one * 0.1f);
 
-                        Gizmos.color = (_cubeGrid.cubes[x, y, z].GetCorner(7).state == States.Wall) ? Color.black : Color.white;
-                        Gizmos.DrawCube(_cubeGrid.cubes[x, y, z].GetCorner(7).position, Vector3.one * 0.1f);
-                    }
-                }
-            }
-        }
-    }
+    //                    Gizmos.color = (_cubeGrid.cubes[x, y, z].GetCorner(7).state == States.Wall) ? Color.black : Color.white;
+    //                    Gizmos.DrawCube(_cubeGrid.cubes[x, y, z].GetCorner(7).position, Vector3.one * 0.1f);
+    //                }
+    //            }
+    //        }
+    //    }
+    //}
 
     private void TriangulateCube(Cube cube)
     {
@@ -131,18 +133,18 @@ public class MeshGenerator : MonoBehaviour
         {
             if (points[i].vertexIndex == -1)
             {
-                points[i].vertexIndex = _vertices.Count;
+                points[i].vertexIndex = _vertexBuffer.Count;
 
-                _vertices.Add(points[i].position);
+                _vertexBuffer.Add(points[i].position);
             }
         }
     }
 
     private void CreateTriangle(Node a,Node b, Node c)
     {
-        _triangles.Add(a.vertexIndex);
-        _triangles.Add(b.vertexIndex);
-        _triangles.Add(c.vertexIndex);
+        _indexBuffer.Add(a.vertexIndex);
+        _indexBuffer.Add(b.vertexIndex);
+        _indexBuffer.Add(c.vertexIndex);
     }
 
 

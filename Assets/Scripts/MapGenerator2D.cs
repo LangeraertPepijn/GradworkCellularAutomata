@@ -75,8 +75,8 @@ public class MapGenerator2D :  MapGenerator
                 }
                 else
                 {
-                    //_map[x, y].state = (_randomNumberGenerator.Next(0, 100) / 100.0f < _randomFillPercent) ? States.Wall : States.Empty;
-                    _map[x, y].state = (Random.Range(0.0f, 1.0f) < _randomFillPercent) ? States.Wall : States.Empty;
+                    _map[x, y].state = (_randomNumberGenerator.Next(0, 100) / 100.0f < _randomFillPercent) ? States.Wall : States.Empty;
+                    //_map[x, y].state = (Random.Range(0.0f, 1.0f) < _randomFillPercent) ? States.Wall : States.Empty;
                
                 }
 
