@@ -14,7 +14,7 @@ public class MapGenerator3D : MapGenerator
 
     [CanBeNull] private Cell[,,] _map3D;
     private States[,,] _stateBuffer3D;
-    private System.Random _randomNumberGenerator = null;
+
 
     //3D code
 
@@ -25,7 +25,7 @@ public class MapGenerator3D : MapGenerator
     /// <param name="y">y coord of cell</param>
     /// <param name="z">z coord of cell</param>
     /// <returns></returns>
-    private bool IsInMap3D(int x, int y, int z)
+    public bool IsInMap3D(int x, int y, int z)
     {
         return x >= 0 && x < _width && y >= 0 && y < _height && z >= 0 && z < _depth;
     }
@@ -40,10 +40,12 @@ public class MapGenerator3D : MapGenerator
         _stateBuffer3D = new States[_width, _height, _depth];
 
 
- 
 
-        if (!_useRandomSeed)
+        if (_useRandomSeed)
+            _seed = System.DateTime.Now.ToString();
+        if (_randomNumberGenerator==null)
             _randomNumberGenerator = new System.Random(_seed.GetHashCode());
+  
 
 
 
@@ -130,14 +132,12 @@ public class MapGenerator3D : MapGenerator
                     }
                     else
                     {
-                        if(_useRandomSeed)
-                        _map3D[x, y, z].state = (Random.Range(0, 1.0f) < _randomFillPercent)
-                            ? States.Wall
-                            : States.Empty;
-                        else
-                            _map3D[x, y, z].state = (_randomNumberGenerator.Next(0, 100) / 100.0f < _randomFillPercent)
-                            ? States.Wall
-                            : States.Empty;
+                        //if(_useRandomSeed)
+                        //_map3D[x, y, z].state = (Random.Range(0, 1.0f) < _randomFillPercent)
+                        //    ? States.Wall
+                        //    : States.Empty;
+                        //else
+                        _map3D[x, y, z].state = (_randomNumberGenerator.Next(0, 100) / 100.0f < _randomFillPercent) ? States.Wall : States.Empty;
 
                     }
                 }

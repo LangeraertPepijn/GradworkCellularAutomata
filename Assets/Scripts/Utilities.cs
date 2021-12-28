@@ -109,12 +109,16 @@ public class Room : IComparable<Room>
                         _floorIndex = y;
                     for (int z = cell.zCoord - 1; z <= cell.zCoord + 1; z++)
                     {
-                        //von neumann neighbours only
-                        if (x == cell.xCoord || y == cell.yCoord || z == cell.zCoord)
+                        if (x >= 0 && x < map.GetLength(0) && y >= 0 && y < map.GetLength(1) && z >= 0 &&
+                            z < map.GetLength(2))
                         {
-                            if (map[x, y, z].state == States.Wall)
+                            //von neumann neighbours only
+                            if (x == cell.xCoord || y == cell.yCoord || z == cell.zCoord)
                             {
-                                _edgeCells.Add(cell);
+                                if (map[x, y, z].state == States.Wall)
+                                {
+                                    _edgeCells.Add(cell);
+                                }
                             }
                         }
                     }
@@ -204,27 +208,28 @@ public class Cube
         corners = cubeCorners;
         nodes = new List<Node>();
         nodes.Add(cubeCorners[0].right);
-        nodes.Add(cubeCorners[1].front);
+        nodes.Add(cubeCorners[2].front);
         nodes.Add(cubeCorners[3].right);
-        nodes.Add(cubeCorners[0].front);
+        nodes.Add(cubeCorners[3].front);
+
+        nodes.Add(cubeCorners[4].right);
+        nodes.Add(cubeCorners[6].front);
+        nodes.Add(cubeCorners[7].right);
+        nodes.Add(cubeCorners[7].front);
 
         nodes.Add(cubeCorners[0].above);
         nodes.Add(cubeCorners[1].above);
         nodes.Add(cubeCorners[2].above);
         nodes.Add(cubeCorners[3].above);
 
-        nodes.Add(cubeCorners[4].right);
-        nodes.Add(cubeCorners[5].front);
-        nodes.Add(cubeCorners[7].right);
-        nodes.Add(cubeCorners[4].front);
 
 
         configuration = 0;
         for (int i = 0; i < cubeCorners.Count; i++)
         {
-            if (cubeCorners[i].state== 0)
+            if (cubeCorners[i].state== States.Wall)
             {
-                configuration = 1 << i;
+                configuration += 1 << i;
             }
         }
     }
@@ -240,6 +245,10 @@ public class Cube
     public List<ControlNode> GetCorners()
     {
         return corners;
+    }
+    public Node GetNode(int index)
+    {
+        return nodes[index];
     }
 }
 
@@ -266,8 +275,8 @@ public class ControlNode:Node
     public ControlNode(Vector3 pos, States stateInit,float size):base(pos)
     {
         position = pos;
-        above = new Node(pos + Vector3.up * size / 2f);
-        front = new Node(pos + Vector3.forward * size / 2f);
+        above = new Node(pos + Vector3.forward * size / 2f);
+        front = new Node(pos + Vector3.up * size / 2f);
         right = new Node(pos + Vector3.right * size / 2f);
 
         state = stateInit;
@@ -278,10 +287,7 @@ public class ControlNode:Node
 
 public class Table
 {
-    public int[] test(int i)
-    {
 
-    }
     public static readonly int[,] TriTable = new int[256, 16]
     {
         { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },

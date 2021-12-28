@@ -33,10 +33,11 @@ public class MapGenerator2D :  MapGenerator
         _map = new Cell[_width, _height];
         _stateBuffer = new States[_width, _height];
 
-       // if (_useRandomSeed)
-          //  _seed = System.DateTime.Now.ToString();
+         if (_useRandomSeed) 
+             _seed = System.DateTime.Now.ToString();
 
-        //_randomNumberGenerator = new System.Random(_seed.GetHashCode());
+        if (_randomNumberGenerator == null)
+            _randomNumberGenerator = new System.Random(_seed.GetHashCode());
 
         RandomFillMap();
         IterateStates();

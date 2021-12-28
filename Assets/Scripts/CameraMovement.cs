@@ -4,11 +4,11 @@ using UnityEngine;
 
 public class CameraMovement : MonoBehaviour
 {
-    float mainSpeed = 100.0f; //regular speed
-    float shiftAdd = 250.0f; //multiplied by how long shift is held.  Basically running
-    float maxShift = 1000.0f; //Maximum speed when holdin gshift
-    private Vector3 lastMouse = new Vector3(255, 255, 255); //kind of in the middle of the screen, rather than at the top (play)
-    private float totalRun = 1.0f;
+    private float mainSpeed = 100.0f; //regular speed
+    private float shiftAdd = 250.0f; //multiplied by how long shift is held.  Basically running
+    private float maxShift = 1000.0f; //Maximum speed when holdin gshift
+    private Vector3 _lastMouse = new Vector3(255, 255, 255); //kind of in the middle of the screen, rather than at the top (play)
+    private float _totalRun = 1.0f;
 
 
     void Update()
@@ -35,15 +35,15 @@ public class CameraMovement : MonoBehaviour
         { // only move while a direction key is pressed
             if (Input.GetKey(KeyCode.LeftShift))
             {
-                totalRun += Time.deltaTime;
-                p = p * totalRun * shiftAdd;
+                _totalRun += Time.deltaTime;
+                p = p * _totalRun * shiftAdd;
                 p.x = Mathf.Clamp(p.x, -maxShift, maxShift);
                 p.y = Mathf.Clamp(p.y, -maxShift, maxShift);
                 p.z = Mathf.Clamp(p.z, -maxShift, maxShift);
             }
             else
             {
-                totalRun = Mathf.Clamp(totalRun * 0.5f, 1f, 1000f);
+                _totalRun = Mathf.Clamp(_totalRun * 0.5f, 1f, 1000f);
                 p = p * mainSpeed;
             }
 

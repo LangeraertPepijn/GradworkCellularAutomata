@@ -25,6 +25,8 @@ public abstract class MapGenerator : MonoBehaviour
     [SerializeField] [Range(1, 50)] protected int _width = 50;
     [SerializeField] [Range(1, 50)] protected int _height = 50;
 
+    protected System.Random _randomNumberGenerator = null;
+
     // Start is called before the first frame update
     protected void Start()
     {

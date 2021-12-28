@@ -1,90 +1,149 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using JetBrains.Annotations;
 using UnityEngine;
 
 public class MeshGenerator : MonoBehaviour
 {
-    public CubeGrid cubeGrid;
+    private CubeGrid _cubeGrid;
 
-    void OnDrawGizmos()
+    private List<Vector3> _vertices=new List<Vector3>();
+    private List<int> _triangles=new List<int>();
+
+    public void GenerateMesh(Cell[,,] map, float size)
     {
-        if (cubeGrid != null)
+        _cubeGrid = new CubeGrid(map, size);
+
+        for (int x = 0; x < _cubeGrid.cubes.GetLength(0); x++)
         {
-            for (int x = 0; x < cubeGrid.cubes.GetLength(0); x++)
+            for (int y = 0; y < _cubeGrid.cubes.GetLength(1); y++)
             {
-                for (int y = 0; y < cubeGrid.cubes.GetLength(1); y++)
+                for (int z = 0; z < _cubeGrid.cubes.GetLength(2); z++)
                 {
-                    for (int z = 0; z < cubeGrid.cubes.GetLength(2); z++)
+                    TriangulateCube(_cubeGrid.cubes[x, y, z]);
+                }
+            }
+        }
+        
+        Mesh mesh = new Mesh();
+
+        GetComponent<MeshFilter>().mesh = mesh;
+
+        mesh.vertices = _vertices.ToArray();
+        mesh.triangles = _triangles.ToArray();
+        mesh.RecalculateNormals();
+    }
+
+    private void OnDrawGizmos()
+    {
+        if (_cubeGrid != null)
+        {
+            for (int x = 0; x < _cubeGrid.cubes.GetLength(0); x++)
+            {
+                for (int y = 0; y < _cubeGrid.cubes.GetLength(1); y++)
+                {
+                    for (int z = 0; z < _cubeGrid.cubes.GetLength(2); z++)
                     {
-                        Gizmos.color = (cubeGrid.cubes[x, y, z].GetCorner(1).state==States.Wall) ? new Color(): Color.white;
-                        Gizmos.DrawCube(cubeGrid.cubes[x,y,z].GetCorner(0).position,Vector3.one*0.1f);
+                        Gizmos.color = (_cubeGrid.cubes[x, y, z].GetCorner(0).state==States.Wall) ? Color.black: Color.white;
+                        Gizmos.DrawCube(_cubeGrid.cubes[x,y,z].GetCorner(0).position,Vector3.one*0.1f);
 
-                        Gizmos.color = (cubeGrid.cubes[x, y, z].GetCorner(1).state == States.Wall) ? new Color() : Color.white;
-                        Gizmos.DrawCube(cubeGrid.cubes[x, y, z].GetCorner(1).position, Vector3.one * 0.1f);
+                        Gizmos.color = (_cubeGrid.cubes[x, y, z].GetCorner(1).state == States.Wall) ? Color.black : Color.white;
+                        Gizmos.DrawCube(_cubeGrid.cubes[x, y, z].GetCorner(1).position, Vector3.one * 0.1f);
 
-                        Gizmos.color = (cubeGrid.cubes[x, y, z].GetCorner(1).state == States.Wall) ? new Color() : Color.white;
-                        Gizmos.DrawCube(cubeGrid.cubes[x, y, z].GetCorner(2).position, Vector3.one * 0.1f);
+                        Gizmos.color = (_cubeGrid.cubes[x, y, z].GetCorner(2).state == States.Wall) ? Color.black : Color.white;
+                        Gizmos.DrawCube(_cubeGrid.cubes[x, y, z].GetCorner(2).position, Vector3.one * 0.1f);
 
-                        Gizmos.color = (cubeGrid.cubes[x, y, z].GetCorner(1).state == States.Wall) ? new Color() : Color.white;
-                        Gizmos.DrawCube(cubeGrid.cubes[x, y, z].GetCorner(3).position, Vector3.one * 0.1f);
+                        Gizmos.color = (_cubeGrid.cubes[x, y, z].GetCorner(3).state == States.Wall) ? Color.black : Color.white;
+                        Gizmos.DrawCube(_cubeGrid.cubes[x, y, z].GetCorner(3).position, Vector3.one * 0.1f);
 
-                        Gizmos.color = (cubeGrid.cubes[x, y, z].GetCorner(1).state == States.Wall) ? new Color() : Color.white;
-                        Gizmos.DrawCube(cubeGrid.cubes[x, y, z].GetCorner(4).position, Vector3.one * 0.1f);
+                        Gizmos.color = (_cubeGrid.cubes[x, y, z].GetCorner(4).state == States.Wall) ? Color.black : Color.white;
+                        Gizmos.DrawCube(_cubeGrid.cubes[x, y, z].GetCorner(4).position, Vector3.one * 0.1f);
 
-                        Gizmos.color = (cubeGrid.cubes[x, y, z].GetCorner(1).state == States.Wall) ? new Color() : Color.white;
-                        Gizmos.DrawCube(cubeGrid.cubes[x, y, z].GetCorner(5).position, Vector3.one * 0.1f);
+                        Gizmos.color = (_cubeGrid.cubes[x, y, z].GetCorner(5).state == States.Wall) ? Color.black : Color.white;
+                        Gizmos.DrawCube(_cubeGrid.cubes[x, y, z].GetCorner(5).position, Vector3.one * 0.1f);
 
-                        Gizmos.color = (cubeGrid.cubes[x, y, z].GetCorner(1).state == States.Wall) ? new Color() : Color.white;
-                        Gizmos.DrawCube(cubeGrid.cubes[x, y, z].GetCorner(6).position, Vector3.one * 0.1f);
+                        Gizmos.color = (_cubeGrid.cubes[x, y, z].GetCorner(6).state == States.Wall) ? Color.black : Color.white;
+                        Gizmos.DrawCube(_cubeGrid.cubes[x, y, z].GetCorner(6).position, Vector3.one * 0.1f);
 
-                        Gizmos.color = (cubeGrid.cubes[x, y, z].GetCorner(1).state == States.Wall) ? new Color() : Color.white;
-                        Gizmos.DrawCube(cubeGrid.cubes[x, y, z].GetCorner(7).position, Vector3.one * 0.1f);
+                        Gizmos.color = (_cubeGrid.cubes[x, y, z].GetCorner(7).state == States.Wall) ? Color.black : Color.white;
+                        Gizmos.DrawCube(_cubeGrid.cubes[x, y, z].GetCorner(7).position, Vector3.one * 0.1f);
                     }
                 }
             }
         }
     }
 
-    void TriangulateCube(Cube cube)
+    private void TriangulateCube(Cube cube)
     {
         
-        int[] t = Table.TriTable.SubArray(cube.GetConfiguration(),16);
+        int[] indices = Table.TriTable.SubArray(cube.GetConfiguration(),16);
    
-        foreach (ControlNode controlNode in cube.GetCorners())
+        //foreach (ControlNode controlNode in cube.GetCorners())
+        //{
+        //}
+
+
+        List<Node> points = new List<Node>();
+        foreach (int index in indices)
         {
-
-            
-            
+            if(index!=-1)
+                points.Add(cube.GetNode(index)); 
         }
-
-
+        MeshFromPoints(points.ToArray());
        // int indexA = Table.cornerIndexAFromEdge[t];
         //int indexB = Table.cornerIndexBFromEdge[t];
 
 
     }
 
-    void MeshFromPoints(params Node[] points)
+    private void MeshFromPoints(params Node[] points)
     {
+        AssignVertices(points);
+
+        if (points.Length >= 3)
+        {
+            CreateTriangle(points[0], points[1], points[2]);
+        }
+        if (points.Length >= 6)
+        {
+            CreateTriangle(points[3], points[4], points[5]);
+        }
+        if (points.Length >= 9)
+        {
+            CreateTriangle(points[6], points[7], points[8]);
+        }
+        if (points.Length >= 12)
+        {
+            CreateTriangle(points[9], points[10], points[11]);
+        }
+        if (points.Length >= 15)
+        {
+            CreateTriangle(points[12], points[13], points[14]);
+        }
 
     }
 
-    public void GenerateMesh(Cell[,,] map, float size)
+    private void AssignVertices(Node[] points)
     {
-        cubeGrid = new CubeGrid(map, size);
-
-        for (int x = 0; x < cubeGrid.cubes.GetLength(0); x++)
+        for (int i = 0; i < points.Length; i++)
         {
-            for (int y = 0; y < cubeGrid.cubes.GetLength(1); y++)
+            if (points[i].vertexIndex == -1)
             {
-                for (int z = 0; z < cubeGrid.cubes.GetLength(2); z++)
-                {
-                    TriangulateCube(cubeGrid.cubes[x,y,z]);
-                }
+                points[i].vertexIndex = _vertices.Count;
+
+                _vertices.Add(points[i].position);
             }
         }
     }
+
+    private void CreateTriangle(Node a,Node b, Node c)
+    {
+        _triangles.Add(a.vertexIndex);
+        _triangles.Add(b.vertexIndex);
+        _triangles.Add(c.vertexIndex);
+    }
+
 
 }
