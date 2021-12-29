@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using JetBrains.Annotations;
 using UnityEngine;
 
 public enum States : int
@@ -24,7 +27,6 @@ public struct Cell
     public Color color;
 
 }
-
 public struct Coord
 {
     public int xCoord;
@@ -46,19 +48,117 @@ public struct Coord
 
     public static implicit operator Vector3Int(Coord value) => new Vector3Int(value.xCoord, value.yCoord, value.zCoord);
     public static implicit operator Vector2Int(Coord value) => new Vector2Int(value.xCoord, value.yCoord);
+
+    public static Coord operator +(Coord a, Vector3Int b)
+    {
+        Coord result = new Coord();
+        result.xCoord = a.xCoord + b.x;
+        result.yCoord = a.yCoord + b.y;
+        result.zCoord = a.zCoord + b.z;
+        return result;
+    }  
+    public static Coord operator +(Vector3Int a, Coord b)
+    {
+        Coord result = new Coord();
+        result.xCoord = a.x + b.xCoord;
+        result.yCoord = a.y + b.yCoord;
+        result.zCoord = a.z + b.zCoord;
+        return result;
+    }
+    public static Coord operator -(Coord a, Vector3Int b)
+    {
+        Coord result = new Coord();
+        result.xCoord = a.xCoord - b.x;
+        result.yCoord = a.yCoord - b.y;
+        result.zCoord = a.zCoord - b.z;
+        return result;
+    }
+    public static Coord operator -(Vector3Int a, Coord b)
+    {
+        Coord result = new Coord();
+        result.xCoord = a.x - b.xCoord;
+        result.yCoord = a.y - b.yCoord;
+        result.zCoord = a.z - b.zCoord;
+        return result;
+    }
+
+
+    public static Coord operator +(Coord a, Vector2Int b)
+    {
+        Coord result = a;
+        result.xCoord = a.xCoord + b.x;
+        result.yCoord = a.yCoord + b.y;
+        return result;
+    }
+    public static Coord operator +(Vector2Int a, Coord b)
+    {
+        Coord result = b;
+        result.xCoord = a.x + b.xCoord;
+        result.yCoord = a.y + b.yCoord;
+        return result;
+    }
+    public static Coord operator -(Coord a, Vector2Int b)
+    {
+        Coord result = a;
+        result.xCoord = a.xCoord - b.x;
+        result.yCoord = a.yCoord - b.y;
+        return result;
+    }
+    public static Coord operator -(Vector2Int a, Coord b)
+    {
+        Coord result = b;
+        result.xCoord = a.x - b.xCoord;
+        result.yCoord = a.y - b.yCoord;
+        return result;
+    }
+
 }
 
-public class Room : IComparable<Room>
+public abstract class Area: IComparable<Area>
 {
-    private List<Coord> _cells;
-    private List<Coord> _edgeCells;
-    private List<Room> _connectedRooms;
-    private int _roomSize;
-    private bool _isMainRoom;
-    private bool _isAccessableFormMainRoom;
 
-    private int _floorIndex;
-    private int _roofIndex;
+    protected List<Coord> _cells=new List<Coord>();
+    protected List<Coord> _edgeCells=new List<Coord>();
+    protected List<Room> _connectedRooms=new List<Room>();
+    protected int _size=0;
+    protected int _floorIndex;
+    protected int _roofIndex;
+
+    public int Size => _size;
+
+    public int FloorIndex => _floorIndex;
+
+    public int RoofIndex => _roofIndex;
+
+    public List<Room> ConnectedRooms
+    {
+        get => _connectedRooms;
+        set => _connectedRooms = value;
+    }
+
+
+    public List<Coord> Cells => _cells;
+
+    public List<Coord> EdgeCells => _edgeCells;
+
+    public bool IsConnected(Room otherRoom)
+    {
+        return _connectedRooms.Contains(otherRoom);
+    }
+
+    public int CompareTo(Area other)
+    {
+        if (ReferenceEquals(this, other)) return 0;
+        if (ReferenceEquals(null, other)) return 1;
+        return other._size.CompareTo(_size);
+    }
+}
+
+public class Room : Area
+{
+
+    private bool _isMainRoom;
+    private bool _isAccessibleFormMainRoom;
 
     public Room()
     {
@@ -68,7 +168,7 @@ public class Room : IComparable<Room>
     public Room(List<Coord> roomCells, Cell[,] map)
     {
         _cells = roomCells;
-        _roomSize = roomCells.Count;
+        _size = roomCells.Count;
         _connectedRooms = new List<Room>();
 
         _edgeCells = new List<Coord>();
@@ -95,7 +195,7 @@ public class Room : IComparable<Room>
     public Room(List<Coord> roomCells, Cell[,,] map)
     {
         _cells = roomCells;
-        _roomSize = roomCells.Count;
+        _size = roomCells.Count;
         _connectedRooms = new List<Room>();
 
         _roofIndex = 0;
@@ -140,70 +240,224 @@ public class Room : IComparable<Room>
         set => _isMainRoom = value;
     }
 
-    public bool IsAccessableFormMainRoom
+    public bool IsAccessibleFormMainRoom
     {
-        get => _isAccessableFormMainRoom;
+        get => _isAccessibleFormMainRoom;
         set
         {
-            if (value != _isAccessableFormMainRoom)
+            if (value != _isAccessibleFormMainRoom)
             {
-                _isAccessableFormMainRoom = value;
+                _isAccessibleFormMainRoom = value;
                 if (value)
                 {
                     foreach (var connectedRoom in ConnectedRooms)
                     {
-                        connectedRoom.IsAccessableFormMainRoom = true;
+                        connectedRoom.IsAccessibleFormMainRoom = true;
                     }
                 }
             }
         }
     }
 
-    public int RoomSize => _roomSize;
-
-    public int FloorIndex => _floorIndex;
-
-    public int RoofIndex => _roofIndex;
-
-    public List<Room> ConnectedRooms => _connectedRooms;
-
-    public List<Coord> Cells => _cells;
-
-    public List<Coord> EdgeCells => _edgeCells;
 
     public static void ConnectRooms(Room firstRoom, Room secondRoom)
     {
-        if (firstRoom.IsAccessableFormMainRoom)
+        if (firstRoom.IsAccessibleFormMainRoom)
         {
-            secondRoom.IsAccessableFormMainRoom = true;
+            secondRoom.IsAccessibleFormMainRoom = true;
         }
-        else if (secondRoom.IsAccessableFormMainRoom)
+        else if (secondRoom.IsAccessibleFormMainRoom)
         {
-            firstRoom.IsAccessableFormMainRoom = true;
+            firstRoom.IsAccessibleFormMainRoom = true;
         }
 
         firstRoom.ConnectedRooms.Add(secondRoom);
         secondRoom.ConnectedRooms.Add(firstRoom);
     }
 
-
-
-    public bool IsConnected(Room otherRoom)
-    {
-        return _connectedRooms.Contains(otherRoom);
-    }
-
-    public int CompareTo(Room other)
-    {
-        if (ReferenceEquals(this, other)) return 0;
-        if (ReferenceEquals(null, other)) return 1;
-        return other._roomSize.CompareTo(_roomSize);
-    }
-
-
-
-
 }
+
+public class Corridor : Area
+{
+    
+    public Corridor()
+    {
+    }
+
+    //2D constructor
+    public Corridor(List<Coord> corridorCells, Cell[,] map)
+    {
+        _cells = corridorCells;
+        _size = corridorCells.Count;
+        _connectedRooms = new List<Room>();
+
+        _edgeCells = new List<Coord>();
+        foreach (Coord cell in corridorCells)
+        {
+            for (int x = cell.xCoord - 1; x <= cell.xCoord + 1; x++)
+            {
+                for (int y = cell.yCoord - 1; y <= cell.yCoord + 1; y++)
+                {
+                    //von neumann neighbours only
+                    if (x == cell.xCoord || y == cell.yCoord)
+                    {
+                        if (map[x, y].state == States.Wall)
+                        {
+                            _edgeCells.Add(cell);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public void AddConnectToRoom(Room room)
+    {
+        _connectedRooms.Add(room);
+    }
+    //3D constructor
+    public Corridor(List<Coord> corridorCells, Cell[,,] map)
+    {
+        _cells = corridorCells;
+        _size = corridorCells.Count;
+        _connectedRooms = new List<Room>();
+
+        _roofIndex = 0;
+        _floorIndex = int.MaxValue;
+
+        _edgeCells = new List<Coord>();
+        foreach (Coord cell in corridorCells)
+        {
+            if (_roofIndex < cell.yCoord)
+                _roofIndex = cell.yCoord;
+            if (_floorIndex > cell.yCoord)
+                _floorIndex = cell.yCoord;
+
+            for (int x = cell.xCoord - 1; x <= cell.xCoord + 1; x++)
+            {
+                for (int y = cell.yCoord - 1; y <= cell.yCoord + 1; y++)
+                {
+
+                    for (int z = cell.zCoord - 1; z <= cell.zCoord + 1; z++)
+                    {
+                        if (x >= 0 && x < map.GetLength(0) && y >= 0 && y < map.GetLength(1) && z >= 0 &&
+                            z < map.GetLength(2))
+                        {
+                            //von neumann neighbours only
+                            if (x == cell.xCoord || y == cell.yCoord || z == cell.zCoord)
+                            {
+                                if (map[x, y, z].state == States.Wall)
+                                {
+                                    _edgeCells.Add(cell);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public Corridor(List<Coord> corridorCells,bool is3D=false)
+    {
+
+        _cells = corridorCells;
+        _size = corridorCells.Count;
+        _connectedRooms = new List<Room>();
+        _edgeCells = new List<Coord>();
+        if(is3D)
+        {
+            
+            _roofIndex = 0;
+            _floorIndex = int.MaxValue;
+
+        }
+    }
+
+    public Coord Last()
+    {
+        return Cells.Last();
+    }
+    public void CalcEdges(Cell[,] map)
+    {
+        foreach (Coord cell in _cells)
+        {
+            for (int x = cell.xCoord - 1; x <= cell.xCoord + 1; x++)
+            {
+                for (int y = cell.yCoord - 1; y <= cell.yCoord + 1; y++)
+                {
+                    //von neumann neighbours only
+                    if (x >= 0 && x < map.GetLength(0) && y >= 0 && y < map.GetLength(1))
+                    {
+
+                        if (x == cell.xCoord || y == cell.yCoord)
+                        {
+                            if (map[x, y].state == States.Wall)
+                            {
+                                _edgeCells.Add(cell);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public void CalcEdges(Cell[,,] map)
+    {
+        foreach (Coord cell in _cells)
+        {
+            if (_roofIndex < cell.yCoord)
+                _roofIndex = cell.yCoord;
+            if (_floorIndex > cell.yCoord)
+                _floorIndex = cell.yCoord;
+
+            for (int x = cell.xCoord - 1; x <= cell.xCoord + 1; x++)
+            {
+                for (int y = cell.yCoord - 1; y <= cell.yCoord + 1; y++)
+                {
+
+                    for (int z = cell.zCoord - 1; z <= cell.zCoord + 1; z++)
+                    {
+                        if (x >= 0 && x < map.GetLength(0) && y >= 0 && y < map.GetLength(1) && z >= 0 &&
+                            z < map.GetLength(2))
+                        {
+                            //von neumann neighbours only
+                            if (x == cell.xCoord || y == cell.yCoord || z == cell.zCoord)
+                            {
+                                if (map[x, y, z].state == States.Wall)
+                                {
+                                    _edgeCells.Add(cell);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public void ConnectRooms(Room firstRoom, Room secondRoom)
+    {
+        ConnectedRooms.Add(firstRoom);
+        ConnectedRooms.Add(secondRoom);
+    }
+
+    public void AddCells(List<Coord> cells)
+    {
+        if(cells!=null&&cells.Count>0)
+            _cells.AddRange(cells);
+    }
+    public void AddCell(Coord cell)
+    {
+        _cells.Add(cell);
+    }
+    public void RemoveCell(Coord cell)
+    {
+        _cells.Remove(cell);
+    }
+}
+
 
 public class Cube
 {

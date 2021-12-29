@@ -139,7 +139,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &132861039
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -152,22 +152,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5145c264a5db85544ab25e7815dd2773, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _cube: {fileID: 3440554682568251086, guid: e876bbbd2b549534f86e4263de21a926, type: 3}
-  _seed: 123
-  _useRandomSeed: 1
   _MakeEdgesWalls: 1
-  _randomFillPercent: 0.632
+  _useRandomSeed: 0
+  _seed: 28/12/2021 15:00:33
+  _randomFillPercent: 0.564
   _sizeThreshold: 5
-  _iterations: 6
+  _iterations: 8
   _neighbourWallCountToChange: 4
   _neighbourEmptyCountToChange: 4
+  _colorRegions: 1
+  _cube: {fileID: 3440554682568251086, guid: e876bbbd2b549534f86e4263de21a926, type: 3}
   _showWalls: 1
   _showEmpty: 1
-  _showShell: 0
+  _showShell: 1
   _shellEmpty: 1
   _makeShellSameAsNeighbour: 1
+  _connectClosestRooms: 0
   _forceAccessibilityFromMainRoom: 1
   _corridorRadius: {x: 1, y: 2}
+  _useDigger: 1
+  _corridorCounter: 43
+  _corridorSpacing: 1
+  _corridorLengthMinMax: {x: 5, y: 10}
+  _turnCount: 2
+  _corridorFromRoomChance: 0.7
+  _createDeadEnds: 0
   _width: 50
   _height: 50
 --- !u!4 &132861040
@@ -392,7 +401,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1198924072
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -405,26 +414,35 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 159c52c506887e24ebde69a9bc4ac71c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _cube: {fileID: 3440554682568251086, guid: e876bbbd2b549534f86e4263de21a926, type: 3}
-  _seed: 28/12/2021 11:23:14
-  _useRandomSeed: 0
-  _MakeEdgesWalls: 0
-  _randomFillPercent: 0.572
+  _MakeEdgesWalls: 1
+  _useRandomSeed: 1
+  _seed: 28/12/2021 12:35:57
+  _randomFillPercent: 0.547
   _sizeThreshold: 5
-  _iterations: 0
-  _neighbourWallCountToChange: 1
-  _neighbourEmptyCountToChange: 2
-  _showWalls: 1
+  _iterations: 5
+  _neighbourWallCountToChange: 14
+  _neighbourEmptyCountToChange: 16
+  _colorRegions: 1
+  _cube: {fileID: 3440554682568251086, guid: e876bbbd2b549534f86e4263de21a926, type: 3}
+  _showWalls: 0
   _showEmpty: 1
   _showShell: 1
   _shellEmpty: 0
   _makeShellSameAsNeighbour: 1
+  _connectClosestRooms: 1
   _forceAccessibilityFromMainRoom: 1
-  _corridorRadius: {x: 1, y: 2}
-  _width: 2
-  _height: 2
-  _depth: 2
-  _colorRegions: 0
+  _corridorRadius: {x: 1, y: 3}
+  _useDigger: 0
+  _corridorCounter: 1
+  _corridorSpacing: 1
+  _corridorLengthMinMax: {x: 1, y: 10}
+  _turnCount: 0
+  _corridorFromRoomChance: 0.7
+  _createDeadEnds: 0
+  _width: 32
+  _height: 20
+  _depth: 32
+  _generateMesh: 0
 --- !u!4 &1198924073
 Transform:
   m_ObjectHideFlags: 0

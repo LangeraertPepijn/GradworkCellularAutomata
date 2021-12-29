@@ -10,7 +10,8 @@ public class MapGenerator3D : MapGenerator
 {
 
     [SerializeField] [Range(1, 50)] private int _depth = 50;
-    [SerializeField] private bool _colorRegions = true;
+    [Space(10)]
+    [Header("3D unique variables")]
     [SerializeField] private bool _generateMesh = true;
 
     [CanBeNull] private Cell[,,] _map3D;
@@ -363,6 +364,7 @@ public class MapGenerator3D : MapGenerator
             }
             else
             {
+                 
                 survivingRooms.Add(new Room(region,_map3D));
             }
         }
@@ -373,23 +375,30 @@ public class MapGenerator3D : MapGenerator
         {
             survivingRooms.Sort();
             survivingRooms[0].IsMainRoom = true;
-            survivingRooms[0].IsAccessableFormMainRoom = true;
+            survivingRooms[0].IsAccessibleFormMainRoom = true;
         }
-        ConnectClosestRooms(survivingRooms);
-        
+
+        List<Corridor> corridors = new List<Corridor>();
+        if(_connectClosestRooms)
+           corridors.AddRange( ConnectClosestRooms(survivingRooms));
+        if (_useDigger)
+        {
+
+        }
     }
 
-    protected override void ConnectClosestRooms(List<Room> roomsToConnect)
+    protected override List<Corridor> ConnectClosestRooms(List<Room> roomsToConnect)
     {
 
         List<Room> roomsConnectedToMain = new List<Room>();
         List<Room> roomsNotConnectedToMain = new List<Room>();
+        List<Corridor> corridors = new List<Corridor>();
 
         if (_forceAccessibilityFromMainRoom)
         {
             foreach (Room room in roomsToConnect)
             {
-                if (room.IsAccessableFormMainRoom)
+                if (room.IsAccessibleFormMainRoom)
                 {
                     roomsConnectedToMain.Add(room);
                 }
@@ -468,17 +477,19 @@ public class MapGenerator3D : MapGenerator
             }
             if (shortestDistance < float.MaxValue - 1.0f&&!_forceAccessibilityFromMainRoom)
             {
-                CreateCorridor(bestFirstRoom, bestSecondRoom, bestFirstCell, bestSecondCell);
+                corridors.Add(CreateCorridor(bestFirstRoom, bestSecondRoom, bestFirstCell, bestSecondCell));
                 shortestDistance = float.MaxValue;
             }
         }
         if (shortestDistance < float.MaxValue - 1.0f && _forceAccessibilityFromMainRoom)
         {
-            CreateCorridor(bestFirstRoom, bestSecondRoom, bestFirstCell, bestSecondCell);
+            corridors.Add(CreateCorridor(bestFirstRoom, bestSecondRoom, bestFirstCell, bestSecondCell));
             shortestDistance = float.MaxValue;
             if (roomsNotConnectedToMain.Count > 0)
-                ConnectClosestRooms(roomsToConnect);
+               corridors.AddRange(ConnectClosestRooms(roomsToConnect));
         }
+
+        return corridors;
     }
 
 
@@ -660,9 +671,10 @@ public class MapGenerator3D : MapGenerator
     }
 
     // changes the cells in a radius to empty
-    void DrawSphere(Coord cell)
+    private List<Coord> DrawSphere(Coord cell)
     {
         int radius = Random.Range(_corridorRadius.x, _corridorRadius.y);
+        List<Coord> cells = new List<Coord>();
         for (int x = -radius; x < radius; x++)
         {
             for (int y = -radius; y < radius; y++)
@@ -677,16 +689,19 @@ public class MapGenerator3D : MapGenerator
 
                         if (IsInMap3D(xToChange, yToChange, zToChange))
                         {
+                            cells.Add(new Coord(xToChange, yToChange,zToChange));
                             _map3D[xToChange, yToChange,zToChange].state = States.Empty;
                         }
                     }
                 }
             }
         }
+
+        return cells;
     }
 
     //creates a corridor in between two rooms 
-    protected override void CreateCorridor(Room firstRoom, Room secondRoom, Coord firstRoomCell, Coord secondRoomCell)
+    protected override Corridor CreateCorridor(Room firstRoom, Room secondRoom, Coord firstRoomCell, Coord secondRoomCell)
     {
         Room.ConnectRooms(firstRoom, secondRoom);
         Vector3 posFirstCell = new Vector3(-_width / 2 + firstRoomCell.xCoord + 0.5f, -_height / 2 + firstRoomCell.yCoord + 0.5f, -_depth / 2 + firstRoomCell.zCoord + 0.5f);
@@ -698,11 +713,15 @@ public class MapGenerator3D : MapGenerator
         Debug.Log("ConnectionFound");
 
         List<Coord> line = GetLine(firstRoomCell, secondRoomCell);
+        Corridor corridor = new Corridor();
 
         foreach (Coord cell in line)
         {
-            DrawSphere(cell);
+            corridor.AddCells(DrawSphere(cell));
         }
+        corridor.AddCells(line);
+        corridor.CalcEdges(_map3D);
+        return corridor;
     }
 
     protected override void UpdateCubes()
@@ -771,5 +790,10 @@ public class MapGenerator3D : MapGenerator
             }
         }
 
+    }
+
+    protected override List<Corridor> DigCorridors(List<Room> rooms, List<Corridor> corridors)
+    {
+        throw new NotImplementedException();
     }
 }

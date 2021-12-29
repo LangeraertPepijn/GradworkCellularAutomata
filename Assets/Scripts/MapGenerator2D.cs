@@ -1,7 +1,10 @@
 using UnityEngine;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
 using JetBrains.Annotations;
+using Color = UnityEngine.Color;
 using Random = UnityEngine.Random;
 
 
@@ -33,6 +36,14 @@ public class MapGenerator2D :  MapGenerator
         _map = new Cell[_width, _height];
         _stateBuffer = new States[_width, _height];
 
+
+        for (int x = 0; x < _width; x++)
+        {
+            for (int y = 0; y < _height; y++)
+            {
+                _map[x,y].color=Color.white;
+            }
+        }
          if (_useRandomSeed) 
              _seed = System.DateTime.Now.ToString();
 
@@ -273,24 +284,29 @@ public class MapGenerator2D :  MapGenerator
         {
             survivingRooms.Sort();
             survivingRooms[0].IsMainRoom = true;
-            survivingRooms[0].IsAccessableFormMainRoom = true;
+            survivingRooms[0].IsAccessibleFormMainRoom = true;
         }
 
-        ConnectClosestRooms(survivingRooms);
+        List<Corridor> corridors = new List<Corridor>();
+        if(_connectClosestRooms)
+            corridors=ConnectClosestRooms(survivingRooms);
+        if (_useDigger)
+            DigCorridors(survivingRooms,corridors);
     }
 
     //Connecting the rooms
 
-    protected override void ConnectClosestRooms(List<Room> roomsToConnect)
+    protected override List<Corridor> ConnectClosestRooms(List<Room> roomsToConnect)
     {
         List<Room> roomsConnectedToMain = new List<Room>();
         List<Room> roomsNotConnectedToMain = new List<Room>();
+        List<Corridor> corridors = new List<Corridor>();
 
         if (_forceAccessibilityFromMainRoom)
         {
             foreach (Room room in roomsToConnect)
             {
-                if (room.IsAccessableFormMainRoom)
+                if (room.IsAccessibleFormMainRoom)
                 {
                     roomsConnectedToMain.Add(room);
                 }
@@ -344,38 +360,52 @@ public class MapGenerator2D :  MapGenerator
             }
             if (shortestDistance < float.MaxValue - 1.0f&&!_forceAccessibilityFromMainRoom)
             {
-                CreateCorridor(bestFirstRoom, bestSecondRoom, bestFirstCell, bestSecondCell);
+                corridors.Add(CreateCorridor(bestFirstRoom, bestSecondRoom, bestFirstCell, bestSecondCell));
                 shortestDistance = float.MaxValue;
             }
         }
         if (shortestDistance < float.MaxValue - 1.0f && _forceAccessibilityFromMainRoom)
         {
-            CreateCorridor(bestFirstRoom, bestSecondRoom, bestFirstCell, bestSecondCell);
+            corridors.Add(CreateCorridor(bestFirstRoom, bestSecondRoom, bestFirstCell, bestSecondCell));
             shortestDistance = float.MaxValue;
             if (roomsNotConnectedToMain.Count>0)
-             ConnectClosestRooms(roomsToConnect);
+                corridors.AddRange(ConnectClosestRooms(roomsToConnect));
         }
+
+        return corridors;
     }
 
-    protected override void CreateCorridor(Room firstRoom, Room secondRoom, Coord firstRoomCell, Coord secondRoomCell)
+    protected override Corridor CreateCorridor(Room firstRoom, Room secondRoom, Coord firstRoomCell,
+    Coord secondRoomCell)
     {
         Room.ConnectRooms(firstRoom, secondRoom);
-        Vector3 posFirstCell = new Vector3(-_width / 2 + firstRoomCell.xCoord + 0.5f, -_height / 2 + firstRoomCell.yCoord + 0.5f, 0);
-        Vector3 posSecondCell = new Vector3(-_width / 2 + secondRoomCell.xCoord + 0.5f, -_height / 2 + secondRoomCell.yCoord + 0.5f, 0);
+        Vector3 posFirstCell = new Vector3(-_width / 2 + firstRoomCell.xCoord + 0.5f,
+            -_height / 2 + firstRoomCell.yCoord + 0.5f, 0);
+        Vector3 posSecondCell = new Vector3(-_width / 2 + secondRoomCell.xCoord + 0.5f,
+            -_height / 2 + secondRoomCell.yCoord + 0.5f, 0);
         Debug.DrawLine(posFirstCell, posSecondCell, Color.red, 5);
         Debug.Log("ConnectionFound");
 
         List<Coord> line = GetLine(firstRoomCell, secondRoomCell);
+        Corridor corridor = new Corridor();
 
         foreach (Coord cell in line)
         {
-            DrawCircle(cell);
+            corridor.AddCells(DrawCircle(cell));
         }
+
+        corridor.ConnectedRooms = new List<Room> { firstRoom, secondRoom };
+        corridor.AddCells( line);
+        corridor.CalcEdges(_map);
+
+        return corridor;
     }
 
-    void DrawCircle(Coord cell)
+     private  List<Coord> DrawCircle(Coord cell)
     {
         int radius = Random.Range(_corridorRadius.x, _corridorRadius.y);
+
+        List<Coord> cells = new List<Coord>();
         for (int x = -radius; x < radius; x++)
         {
             for (int y = -radius; y < radius; y++)
@@ -387,12 +417,17 @@ public class MapGenerator2D :  MapGenerator
 
                     if (IsInMap(xToChange, yToChange))
                     {
+
+                        cells.Add(new Coord(xToChange,yToChange));
                         _map[xToChange, yToChange].state = States.Empty;
                     }
                 }
             }
         }
+
+        return cells;
     }
+
     List<Coord> GetLine(Coord from, Coord to)
     {
         List<Coord> line = new List<Coord>();
@@ -483,8 +518,14 @@ public class MapGenerator2D :  MapGenerator
 
                     MeshRenderer renderer = _map[x, y].mesh.GetComponent<MeshRenderer>();
                     if (renderer)
-                        renderer.material.color =
+                    {
+                        if(_colorRegions)
+                            renderer.material.color =
+                            (_map[x, y].state == States.Wall) ? Color.black : _map[x, y].color ;
+                        else
+                            renderer.material.color =
                             (_map[x, y].state == States.Wall) ? Color.black : Color.white;
+                    }
 
                     if ((!_showWalls && _map[x, y].state == States.Wall) ||
                         (!_showEmpty && _map[x, y].state == States.Empty) || (_shellEmpty && _map[x, y].neighbourCount == 8) || (!_showShell &&
@@ -495,6 +536,226 @@ public class MapGenerator2D :  MapGenerator
                         _map[x, y].mesh.gameObject.SetActive(true);
                 }
 
+            }
+        }
+
+    }
+
+    protected override List<Corridor> DigCorridors(List<Room> rooms, List<Corridor> corridors)
+    {
+
+        Area currentRoom = new Room();
+        Vector2Int direction = GetNewDirection(new Vector2Int());
+        Coord cell = new Coord(-10,-10);
+        List<Corridor> newCorridors = new List<Corridor>();
+        int breakOutCounter = 0;
+        while (rooms.Count>0)
+        {
+
+
+            if (corridors.Count > 0)
+            {
+                currentRoom = rooms[_randomNumberGenerator.Next(0, rooms.Count)];
+                GetDigPos(currentRoom, ref cell, ref direction);
+            }
+            else
+            {
+                if (corridors.Count>0 && _randomNumberGenerator.Next(0, 100) / 100.0f > _corridorFromRoomChance)
+                {
+
+                    currentRoom = corridors[_randomNumberGenerator.Next(0, corridors.Count-1)];
+                    GetDigPos(currentRoom, ref cell, ref direction);
+
+                }
+                else
+                {
+                    currentRoom = rooms[_randomNumberGenerator.Next(0, rooms.Count-1)];
+                    GetDigPos(currentRoom, ref cell, ref direction);
+
+                }
+            }
+
+            Corridor potentialCorridor = GeneratePotentialCorridor(cell, direction);
+            if(potentialCorridor!=null)
+                potentialCorridor.CalcEdges(_map);
+
+            if (potentialCorridor != null)
+            {
+                Room roomToRemove = null;
+                foreach (Room room in rooms)
+                {
+
+                    if (room.Cells.Contains(potentialCorridor.Last()))
+                    {
+                        if (currentRoom != room)
+                        {
+                            //_map[potentialCorridor.Last().xCoord, potentialCorridor.Last().yCoord].state = States.Empty;
+                           // _map[potentialCorridor.Last().xCoord, potentialCorridor.Last().yCoord].color = Color.magenta;
+                            potentialCorridor.RemoveCell(potentialCorridor.Last());
+
+                            if (currentRoom is Corridor)
+                            {
+                                foreach (Room connectedRoom in currentRoom.ConnectedRooms)
+                                {
+                                    Room.ConnectRooms(connectedRoom, room);
+                                }
+
+                                (currentRoom as Corridor).AddConnectToRoom(room);
+                            }
+                            else
+                            {
+                                Room.ConnectRooms((Room)currentRoom, room);
+                            }
+
+                            newCorridors.Add(potentialCorridor);
+
+                            foreach (Coord edgeCell in potentialCorridor.Cells)
+                            {
+                                if (_map != null)
+                                {
+   
+                                    _map[edgeCell.xCoord, edgeCell.yCoord].state = States.Empty;
+                                    _map[edgeCell.xCoord, edgeCell.yCoord].color = Color.blue;
+                                    
+                                }
+                            }
+
+                            roomToRemove = room;
+
+                        }
+
+                    }
+                }
+
+                rooms.Remove(roomToRemove);
+            }
+
+            ++breakOutCounter;
+      
+            if (breakOutCounter > _corridorCounter)
+                return newCorridors;
+        }
+
+        return newCorridors;
+    }
+
+    private Corridor GeneratePotentialCorridor(Coord start, Vector2Int dir)
+    {
+
+        Corridor potentialCorridor = new Corridor();
+        potentialCorridor.AddCell(start);
+        Coord currentCell = start;
+
+        int length = 0;
+
+        int turns = 0;
+
+        while (turns <= _turnCount)
+        {
+            ++turns;
+
+            length = _randomNumberGenerator.Next(_corridorLengthMinMax.x, _corridorLengthMinMax.y);
+
+            while (length > 0)
+            {
+                --length;
+
+                currentCell = currentCell + dir;
+                if (!IsInMap(currentCell.xCoord, currentCell.yCoord))
+                    return null;
+
+                if(_map != null && _map[currentCell.xCoord,currentCell.yCoord].state==States.Empty)
+                {
+                    potentialCorridor.AddCell(currentCell);
+                    return potentialCorridor;
+                }
+
+               // if (!CorridorSpacingCheck(currentCell, dir))
+                   // return null;
+
+                potentialCorridor.AddCell(currentCell);
+
+            }
+
+            dir=GetNewDirection(dir);
+        }
+
+        return null;
+    }
+
+    private Vector2Int GetNewDirection(Vector2Int oldDir)
+    {
+        Vector2Int otherDirection = oldDir;
+        do
+        {
+
+            switch (_randomNumberGenerator.Next(0, 4))
+            {
+                case 0:
+                    otherDirection = Vector2Int.up;
+                    break;
+                case 1:
+                    otherDirection = Vector2Int.right;
+                    break;
+                case 2:
+                    otherDirection = Vector2Int.down;
+                    break;
+                case 3:
+                    otherDirection = Vector2Int.left;
+                    break;
+
+            }
+
+            if (_createDeadEnds)
+                return otherDirection;
+
+
+        } while (otherDirection.x == -oldDir.x && otherDirection.y == -oldDir.y);
+
+        return otherDirection;
+    }
+
+    private bool CorridorSpacingCheck(Coord cell, Vector2Int direction)
+    {
+
+
+        foreach (int r in Enumerable.Range(-_corridorSpacing,/* 2 **/ _corridorSpacing + 1).ToList())
+        {
+            if (direction.x == 0)//north or south
+            {
+                if (IsInMap(cell.xCoord + r, cell.yCoord))
+                    if (_map[cell.xCoord + r, cell.yCoord].state != States.Wall)
+                        return false;
+            }
+            else if (direction.x == 0)//east west
+            {
+                if (IsInMap(cell.xCoord, cell.yCoord + r))
+                    if (_map[cell.xCoord, cell.yCoord + r].state != States.Wall)
+                        return false;
+            }
+
+        }
+
+        return true;
+    }
+
+    private void GetDigPos(Area room, ref Coord cell, ref Vector2Int dir)
+    {
+        Coord edgeCell = room.EdgeCells[_randomNumberGenerator.Next(0, room.EdgeCells.Count)];
+
+        for (int x = edgeCell.xCoord - 1; x < edgeCell.xCoord + 1; x++)
+        {
+            for (int y = edgeCell.yCoord - 1; y < edgeCell.yCoord + 1; y++)
+            {
+                //von neumann neighbourhood
+                if (IsInMap(x, y) && (x == edgeCell.xCoord || y == edgeCell.yCoord) &&
+                    _map[x, y].state == States.Wall)
+                {
+
+                    cell = edgeCell;
+                    dir = new Vector2Int(x, y) - new Vector2Int(edgeCell.xCoord, edgeCell.yCoord);
+                    return;
+                }
             }
         }
 
