@@ -139,7 +139,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &132861039
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -171,7 +171,7 @@ MonoBehaviour:
   _forceAccessibilityFromMainRoom: 1
   _corridorRadius: {x: 1, y: 2}
   _useDigger: 1
-  _corridorCounter: 43
+  _corridorCounter: 90
   _corridorSpacing: 1
   _corridorLengthMinMax: {x: 5, y: 10}
   _turnCount: 2
@@ -401,7 +401,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1198924072
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -415,9 +415,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _MakeEdgesWalls: 1
-  _useRandomSeed: 1
-  _seed: 28/12/2021 12:35:57
-  _randomFillPercent: 0.547
+  _useRandomSeed: 0
+  _seed: 30/12/2021 15:09:28
+  _randomFillPercent: 0.57
   _sizeThreshold: 5
   _iterations: 5
   _neighbourWallCountToChange: 14
@@ -431,12 +431,12 @@ MonoBehaviour:
   _makeShellSameAsNeighbour: 1
   _connectClosestRooms: 1
   _forceAccessibilityFromMainRoom: 1
-  _corridorRadius: {x: 1, y: 3}
-  _useDigger: 0
-  _corridorCounter: 1
+  _corridorRadius: {x: 1, y: 1}
+  _useDigger: 1
+  _corridorCounter: 100
   _corridorSpacing: 1
   _corridorLengthMinMax: {x: 1, y: 10}
-  _turnCount: 0
+  _turnCount: 4
   _corridorFromRoomChance: 0.7
   _createDeadEnds: 0
   _width: 32

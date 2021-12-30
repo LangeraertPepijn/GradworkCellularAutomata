@@ -589,18 +589,18 @@ public class MapGenerator2D :  MapGenerator
                     {
                         if (currentRoom != room)
                         {
-                            //_map[potentialCorridor.Last().xCoord, potentialCorridor.Last().yCoord].state = States.Empty;
-                           // _map[potentialCorridor.Last().xCoord, potentialCorridor.Last().yCoord].color = Color.magenta;
+                            _map[potentialCorridor.Last().xCoord, potentialCorridor.Last().yCoord].state = States.Empty;
+                            _map[potentialCorridor.Last().xCoord, potentialCorridor.Last().yCoord].color = Color.magenta;
                             potentialCorridor.RemoveCell(potentialCorridor.Last());
 
-                            if (currentRoom is Corridor)
+                            if (currentRoom is Corridor corridor)
                             {
-                                foreach (Room connectedRoom in currentRoom.ConnectedRooms)
+                                foreach (Room connectedRoom in corridor.ConnectedRooms)
                                 {
                                     Room.ConnectRooms(connectedRoom, room);
                                 }
 
-                                (currentRoom as Corridor).AddConnectToRoom(room);
+                                corridor.AddConnectToRoom(room);
                             }
                             else
                             {
@@ -670,8 +670,8 @@ public class MapGenerator2D :  MapGenerator
                     return potentialCorridor;
                 }
 
-               // if (!CorridorSpacingCheck(currentCell, dir))
-                   // return null;
+                if (!CorridorSpacingCheck(currentCell, dir))
+                    return null;
 
                 potentialCorridor.AddCell(currentCell);
 
@@ -719,7 +719,7 @@ public class MapGenerator2D :  MapGenerator
     {
 
 
-        foreach (int r in Enumerable.Range(-_corridorSpacing,/* 2 **/ _corridorSpacing + 1).ToList())
+        foreach (int r in Enumerable.Range(-_corridorSpacing,  _corridorSpacing ).ToList())
         {
             if (direction.x == 0)//north or south
             {
@@ -727,7 +727,7 @@ public class MapGenerator2D :  MapGenerator
                     if (_map[cell.xCoord + r, cell.yCoord].state != States.Wall)
                         return false;
             }
-            else if (direction.x == 0)//east west
+            else if (direction.y == 0)//east west
             {
                 if (IsInMap(cell.xCoord, cell.yCoord + r))
                     if (_map[cell.xCoord, cell.yCoord + r].state != States.Wall)

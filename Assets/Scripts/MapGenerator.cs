@@ -32,7 +32,7 @@ public abstract class MapGenerator : MonoBehaviour
     [SerializeField] [Range(0,100)]protected int _corridorCounter = 1;
     [SerializeField] [Range(1,10)]protected int _corridorSpacing = 1;
     [SerializeField] protected Vector2Int _corridorLengthMinMax = new Vector2Int(1,10);
-    [SerializeField] protected int _turnCount  = 0;
+    [SerializeField] [Range(1, 10)] protected int _turnCount  = 0;
     [SerializeField] [Range(0, 1)] protected float _corridorFromRoomChance = 0.7f;
     [SerializeField] protected bool _createDeadEnds = false;
 

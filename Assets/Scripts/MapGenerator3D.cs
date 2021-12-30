@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using JetBrains.Annotations;
@@ -379,11 +380,11 @@ public class MapGenerator3D : MapGenerator
         }
 
         List<Corridor> corridors = new List<Corridor>();
-        if(_connectClosestRooms)
-           corridors.AddRange( ConnectClosestRooms(survivingRooms));
+        if (_connectClosestRooms)
+            corridors.AddRange(ConnectClosestRooms(survivingRooms));
         if (_useDigger)
         {
-
+            corridors.AddRange(DigCorridors(survivingRooms,corridors));
         }
     }
 
@@ -671,7 +672,7 @@ public class MapGenerator3D : MapGenerator
     }
 
     // changes the cells in a radius to empty
-    private List<Coord> DrawSphere(Coord cell)
+    private List<Coord> DrawSphere(Coord cell,Color color)
     {
         int radius = Random.Range(_corridorRadius.x, _corridorRadius.y);
         List<Coord> cells = new List<Coord>();
@@ -691,6 +692,7 @@ public class MapGenerator3D : MapGenerator
                         {
                             cells.Add(new Coord(xToChange, yToChange,zToChange));
                             _map3D[xToChange, yToChange,zToChange].state = States.Empty;
+                            _map3D[xToChange, yToChange,zToChange].color = color;
                         }
                     }
                 }
@@ -717,7 +719,7 @@ public class MapGenerator3D : MapGenerator
 
         foreach (Coord cell in line)
         {
-            corridor.AddCells(DrawSphere(cell));
+            corridor.AddCells(DrawSphere(cell, Color.white));
         }
         corridor.AddCells(line);
         corridor.CalcEdges(_map3D);
@@ -737,7 +739,7 @@ public class MapGenerator3D : MapGenerator
                         MeshRenderer renderer = _map3D[x, y, z].mesh.GetComponent<MeshRenderer>();
                         if (renderer)
                         {
-                            if (_map3D[x, y, z].color.a < 0.01f)
+                            if (_map3D[x, y, z].color == new Color())
                             {
                                 renderer.material.color = (_map3D[x, y, z].state == States.Wall) ? Color.black : Color.white;
                             }
@@ -766,7 +768,7 @@ public class MapGenerator3D : MapGenerator
                         MeshRenderer renderer = _map3D[x, y, z].mesh.GetComponent<MeshRenderer>();
                         if (renderer)
                         {
-                            if (_map3D[x, y, z].color.a <0.01f)
+                            if (_map3D[x, y, z].color == new Color())
                             {
                                 renderer.material.color = (_map3D[x, y, z].state == States.Wall) ? Color.black : Color.white;
                             }
@@ -794,6 +796,335 @@ public class MapGenerator3D : MapGenerator
 
     protected override List<Corridor> DigCorridors(List<Room> rooms, List<Corridor> corridors)
     {
-        throw new NotImplementedException();
+        Area currentRoom = new Room();
+        Vector3Int direction = GetNewDirection(new Vector3Int());
+        Coord cell = new Coord(-10, -10);
+        List<Corridor> newCorridors = new List<Corridor>();
+        int breakOutCounter = 0;
+        while (rooms.Count > 0)
+        {
+
+
+            if (corridors.Count > 0)
+            {
+                currentRoom = rooms[_randomNumberGenerator.Next(0, rooms.Count)];
+                GetDigPos(currentRoom, ref cell, ref direction);
+            }
+            else
+            {
+                if (corridors.Count > 0 && _randomNumberGenerator.Next(0, 100) / 100.0f > _corridorFromRoomChance)
+                {
+
+                    currentRoom = corridors[_randomNumberGenerator.Next(0, corridors.Count - 1)];
+                    GetDigPos(currentRoom, ref cell, ref direction);
+
+                }
+                else
+                {
+                    currentRoom = rooms[_randomNumberGenerator.Next(0, rooms.Count - 1)];
+                    GetDigPos(currentRoom, ref cell, ref direction);
+
+                }
+            }
+
+            Corridor potentialCorridor = GeneratePotentialCorridor(cell, direction);
+            if (potentialCorridor != null)
+                potentialCorridor.CalcEdges(_map3D);
+
+
+            if (potentialCorridor != null)
+            {
+                Room roomToRemove = null;
+                foreach (Room room in rooms)
+                {
+
+                    if (room.Cells.Contains(potentialCorridor.Last()))
+                    {
+                        if (currentRoom != room)
+                        {
+                            //color debug show end node
+                            _map3D[potentialCorridor.Last().xCoord, potentialCorridor.Last().yCoord, potentialCorridor.Last().zCoord].state = States.Empty;
+                            _map3D[potentialCorridor.Last().xCoord, potentialCorridor.Last().yCoord, potentialCorridor.Last().zCoord].color = Color.green;
+                            potentialCorridor.RemoveCell(potentialCorridor.Last());
+
+                            if (currentRoom is Corridor corridor)
+                            {
+                                foreach (Room connectedRoom in corridor.ConnectedRooms)
+                                {
+                                    Room.ConnectRooms(connectedRoom, room);
+                                }
+
+                                corridor.AddConnectToRoom(room);
+                            }
+                            else
+                            {
+                                Room.ConnectRooms((Room)currentRoom, room);
+                            }
+
+                            List<Coord> newCells = new List<Coord>();
+                            foreach (Coord edgeCell in potentialCorridor.Cells)
+                            {
+                                if (_map3D != null)
+                                {
+
+                                    _map3D[edgeCell.xCoord, edgeCell.yCoord,edgeCell.zCoord].state = States.Empty;
+                                    _map3D[edgeCell.xCoord, edgeCell.yCoord,edgeCell.zCoord].color = Color.magenta;
+                                
+
+                                }
+                                newCells.AddRange(DrawSphere(edgeCell,Color.magenta));
+                            }
+                            potentialCorridor.AddCells(newCells);
+                            newCorridors.Add(potentialCorridor);
+                            roomToRemove = room;
+
+                        }
+
+                    }
+                }
+
+                rooms.Remove(roomToRemove);
+            }
+
+            ++breakOutCounter;
+
+            if (breakOutCounter > _corridorCounter)
+                return newCorridors;
+        }
+
+        return newCorridors;
+
     }
+
+
+    private Corridor GeneratePotentialCorridor(Coord start, Vector3Int dir)
+    {
+
+        Corridor potentialCorridor = new Corridor();
+        potentialCorridor.AddCell(start);
+        Coord currentCell = start;
+
+        int length = 0;
+
+        int turns = 0;
+
+        while (turns <= _turnCount)
+        {
+            ++turns;
+
+            length = _randomNumberGenerator.Next(_corridorLengthMinMax.x, _corridorLengthMinMax.y);
+
+            if (dir.y < 0.1f && dir.y > -0.1f)
+            {
+                while (length > 0)
+                {
+                    --length;
+
+                    currentCell = currentCell + dir;
+
+                    if (!IsInMap3D(currentCell.xCoord, currentCell.yCoord, currentCell.zCoord))
+                        return null;
+
+                    if (_map3D != null && _map3D[currentCell.xCoord, currentCell.yCoord, currentCell.zCoord].state ==
+                        States.Empty)
+                    {
+                        if ((Vector3Int)currentCell == (start + dir))
+                        {
+                            return null;
+                        }
+                        potentialCorridor.AddCell(currentCell);
+                        return potentialCorridor;
+                    }
+
+                    if (!CorridorSpacingCheck(currentCell, dir)) 
+                        return null;
+
+                    potentialCorridor.AddCell(currentCell);
+
+                }
+            }
+            else
+            {
+                Vector3Int offset = length * dir;
+                int sign = Math.Sign(offset.y);
+                offset.y = (int)(offset.y * 0.3f+ sign);
+                Coord endCell = currentCell + offset;
+                List<Coord> line = GetLine(currentCell, endCell);
+
+                foreach (Coord cell in line)
+                {
+                    //cool if removed
+                    currentCell = cell;
+                    if (!IsInMap3D(cell.xCoord, cell.yCoord, cell.zCoord))
+                        return null;
+
+                    if (_map3D != null && _map3D[cell.xCoord, cell.yCoord, cell.zCoord].state ==
+                        States.Empty)
+                    {
+                        if ((Vector3Int)currentCell == (start + dir))
+                        {
+                            return null;
+                        }
+                        potentialCorridor.AddCell(cell);
+                        return potentialCorridor;
+                    }
+                    if (!CorridorSpacingCheck(currentCell, dir))
+                        return null;
+
+
+                    potentialCorridor.AddCell(cell);
+                }
+            }
+            dir = GetNewDirection(dir);
+        }
+        return null;
+    }
+
+
+    private bool CorridorSpacingCheck(Coord cell, Vector3Int direction)
+    {
+        for (int r=-_corridorSpacing;r<=_corridorSpacing;r++)
+        {
+            if (direction.x == 0)//north or south
+            {
+                if (direction.y == 0)
+                {
+                    if (IsInMap3D(cell.xCoord + r, cell.yCoord, cell.zCoord))
+                        if (_map3D[cell.xCoord + r, cell.yCoord, cell.zCoord].state != States.Wall)
+                            return false;
+
+                }
+                else
+                {
+                    if (IsInMap3D(cell.xCoord + r, cell.yCoord+r, cell.zCoord))
+                        if (_map3D[cell.xCoord + r, cell.yCoord+r, cell.zCoord].state != States.Wall)
+                            return false;
+                }
+            }
+            else if (direction.z == 0) //east west
+            {
+                if (direction.y == 0)
+                {
+                    if (IsInMap3D(cell.xCoord, cell.yCoord, cell.zCoord + r))
+                        if (_map3D[cell.xCoord, cell.yCoord, cell.zCoord + r].state != States.Wall)
+                            return false;
+                }
+                else
+                {
+                    if (IsInMap3D(cell.xCoord, cell.yCoord + r, cell.zCoord + r))
+                        if (_map3D[cell.xCoord, cell.yCoord + r, cell.zCoord + r].state != States.Wall)
+                            return false;
+                }
+            }
+
+        }
+
+        return true;
+    }
+    private void GetDigPos(Area room, ref Coord cell, ref Vector3Int dir)
+    {
+        Coord edgeCell = room.EdgeCells[_randomNumberGenerator.Next(0, room.EdgeCells.Count)];
+
+
+
+        int equalityIndex = 0;
+        for (int x = edgeCell.xCoord - 1; x <= edgeCell.xCoord + 1; x++)
+        {
+            if (x == edgeCell.xCoord)
+                ++equalityIndex;
+            for (int y = edgeCell.yCoord - 1; y <= edgeCell.yCoord + 1; y++)
+            {
+                if (y == edgeCell.yCoord)
+                    ++equalityIndex;
+                for (int z = edgeCell.zCoord - 1; z <= edgeCell.zCoord + 1; z++)
+                {
+                    if (z == edgeCell.zCoord)
+                        ++equalityIndex;
+
+                    //von neumann neighbourhood
+                    if (IsInMap3D(x, y, z) && equalityIndex == 2 && _map3D[x, y, z].state == States.Wall)
+                    {
+
+                        dir = new Vector3Int(x, y,z) - new Vector3Int(edgeCell.xCoord, edgeCell.yCoord,edgeCell.zCoord);
+                        if (dir.y == 0)
+                        {
+                            cell = edgeCell;
+                            return;
+                        }
+                        else
+                        {
+                            GetDigPos(room,ref cell,ref dir);
+                            return;
+                        }
+
+                    }
+
+                    if (z == edgeCell.zCoord)
+                        --equalityIndex;
+                }
+                if (y == edgeCell.yCoord)
+                    --equalityIndex;
+            }
+            if (x == edgeCell.xCoord)
+                --equalityIndex;
+        }
+    }
+
+    private Vector3Int GetNewDirection(Vector3Int oldDir)
+    {
+        Vector3Int otherDirection = oldDir;
+        do
+        {
+
+            switch (_randomNumberGenerator.Next(0, 12))
+            {
+                case 0:
+                    otherDirection = new Vector3Int(1,1,0);
+                    break;
+                case 1:
+                    otherDirection = Vector3Int.right;
+                    break;
+                case 2:
+                    otherDirection = new Vector3Int(1, -1, 0);
+                    break;
+                case 3:
+                    otherDirection = new Vector3Int(-1, 1, 0);
+                    break;
+                case 4:
+                    otherDirection = Vector3Int.left;
+                    break;
+                case 5:
+                    otherDirection = new Vector3Int(-1, -1, 0);
+                    break;
+                case 6:
+                    otherDirection = new Vector3Int(0, 1, 1);
+                    break;
+                case 7:
+                    otherDirection = Vector3Int.forward;
+                    break;
+                case 8:
+                    otherDirection = new Vector3Int(0, -1, 1);
+                    break;
+                case 9:
+                    otherDirection = new Vector3Int(0, 1, -1);
+                    break;
+                case 10:
+                    otherDirection = Vector3Int.back;
+                    break;
+                case 11:
+                    otherDirection = new Vector3Int(0, -1, -1);
+                    break;
+            }
+
+            if (_createDeadEnds)
+                return otherDirection;
+
+
+        } while ( (otherDirection.x == -oldDir.x && otherDirection.y == -oldDir.y) 
+                 || (otherDirection.x == -oldDir.x && otherDirection.z == -oldDir.z)
+                 || (otherDirection.z == -oldDir.z && otherDirection.y == -oldDir.y));
+
+        return otherDirection;
+    }
+
 }

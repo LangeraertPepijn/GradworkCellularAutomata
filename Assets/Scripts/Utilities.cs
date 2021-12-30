@@ -23,8 +23,12 @@ public struct Cell
     public States state;
     public GameObject mesh;
     public int neighbourCount;
-    //public int[] index;
     public Color color;
+
+    public override string ToString()
+    {
+        return "state: " + (state == States.Empty ? "Empty" : "Wall");
+    }
 
 }
 public struct Coord
@@ -46,6 +50,22 @@ public struct Coord
         zCoord = z;
     }
 
+    public Coord(Vector2Int other)
+    {
+        xCoord = other.x;
+        yCoord = other.y;
+        zCoord = 0;
+    }
+    public Coord(Vector3Int other)
+    {
+        xCoord = other.x;
+        yCoord = other.y;
+        zCoord = other.z;
+    }
+    public override string ToString()
+    {
+        return "x: " + xCoord+ "x: " + " " + yCoord+ "x: "+zCoord;
+    }
     public static implicit operator Vector3Int(Coord value) => new Vector3Int(value.xCoord, value.yCoord, value.zCoord);
     public static implicit operator Vector2Int(Coord value) => new Vector2Int(value.xCoord, value.yCoord);
 
@@ -377,6 +397,10 @@ public class Corridor : Area
     public Coord Last()
     {
         return Cells.Last();
+    }
+    public Coord First()
+    {
+        return Cells.First();
     }
     public void CalcEdges(Cell[,] map)
     {
