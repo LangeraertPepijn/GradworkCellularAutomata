@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
 public enum States : int
@@ -18,6 +19,237 @@ public enum Axis
     z = 2
 }
 
+public class Chunk
+{
+    public Cell[,] Map { get; }
+    public Cell[,,] Map3D { get; }
+    public int DistIndex { get; }
+    public int CreationIndex { get; }
+
+    public Chunk(Cell[,] map,int creationIndex,int distIndex)
+    {
+        Map = map;
+        CreationIndex = creationIndex;
+        DistIndex = distIndex;
+    }
+    public Chunk(Cell[,,] map,int creationIndex, int distIndex)
+    {
+        Map3D = map;
+        CreationIndex = creationIndex;
+        DistIndex = distIndex;
+    }
+
+    public List<int> GetNeighbouringIndices()
+    {
+        List<int> indices = new List<int>();
+
+
+        //DistIndex*4 right
+        if (CreationIndex <= DistIndex)
+        {
+            indices.Add(ChunkMap.CalcIndex(DistIndex + 1, CreationIndex));
+
+        }
+        else if (CreationIndex <= DistIndex * 3)
+        {
+            indices.Add(ChunkMap.CalcIndex(DistIndex - 1, CreationIndex + 2));
+
+        }
+        else
+        {
+            indices.Add(ChunkMap.CalcIndex(DistIndex + 1, CreationIndex + 4));
+
+        }
+
+        //up
+        if (CreationIndex <= DistIndex * 2)
+        {
+            indices.Add(ChunkMap.CalcIndex(DistIndex + 1, CreationIndex + 1));
+
+        }
+        else if (CreationIndex < DistIndex * 4)
+        {
+            indices.Add(ChunkMap.CalcIndex(DistIndex - 1, CreationIndex - 3));
+
+        }
+        else
+        {
+            indices.Add(ChunkMap.CalcIndex(DistIndex + 1, 0));
+
+        }
+
+        //left
+        if (CreationIndex <= DistIndex)
+        {
+            indices.Add(ChunkMap.CalcIndex(DistIndex - 1, CreationIndex));
+
+        }
+        else if (CreationIndex <= DistIndex * 3)
+        {
+            indices.Add(ChunkMap.CalcIndex(DistIndex + 1, CreationIndex + 2));
+
+        }
+        else
+        {
+            indices.Add(ChunkMap.CalcIndex(DistIndex - 1, -4));
+
+        }
+
+        //down
+        if (CreationIndex == 0)
+        {
+            indices.Add(ChunkMap.CalcIndex(DistIndex + 1, 7 + 4 * DistIndex));
+
+        }
+        else if (CreationIndex <= DistIndex * 2)
+        {
+            indices.Add(ChunkMap.CalcIndex(DistIndex - 1, CreationIndex - 1));
+
+        }
+        else if (CreationIndex < DistIndex * 4)
+        {
+            indices.Add(ChunkMap.CalcIndex(DistIndex + 1, CreationIndex + 3));
+
+        }
+
+        // righttopDIag
+        if (CreationIndex <= DistIndex)
+        {
+            indices.Add(ChunkMap.CalcIndex(DistIndex + 2, CreationIndex + 1));
+
+        }
+        else if (CreationIndex <= DistIndex * 2)
+        {
+            indices.Add(ChunkMap.CalcIndex(DistIndex, CreationIndex - 1));
+
+        }
+        else if (CreationIndex <= DistIndex * 3)
+        {
+            indices.Add(ChunkMap.CalcIndex(DistIndex - 2, CreationIndex - 5));
+
+        }
+        else if (CreationIndex < DistIndex * 4)
+        {
+            indices.Add(ChunkMap.CalcIndex(DistIndex , CreationIndex +1));
+
+        }
+        else
+        {
+            
+            indices.Add(ChunkMap.CalcIndex(DistIndex , 0));
+        }
+
+        // lefttopDIag
+        if (CreationIndex < DistIndex)
+        {
+            indices.Add(ChunkMap.CalcIndex(DistIndex , CreationIndex + 1));
+
+        }
+        else if (CreationIndex <= DistIndex * 2)
+        {
+            indices.Add(ChunkMap.CalcIndex(DistIndex+2, CreationIndex + 3));
+
+        }
+        else if (CreationIndex <= DistIndex * 3)
+        {
+            indices.Add(ChunkMap.CalcIndex(DistIndex , CreationIndex - 1));
+
+        }
+        else if (CreationIndex < DistIndex * 4)
+        {
+            indices.Add(ChunkMap.CalcIndex(DistIndex-2, CreationIndex - 7));
+
+        }
+        else
+        {
+
+            indices.Add(ChunkMap.CalcIndex(DistIndex-2, 0));
+        }
+
+
+        // leftbotDIag
+        if(CreationIndex==0)
+        {
+            indices.Add(ChunkMap.CalcIndex(DistIndex , 3+DistIndex*4));
+        }
+        else if (CreationIndex < DistIndex)
+        {
+            indices.Add(ChunkMap.CalcIndex(DistIndex-2, CreationIndex - 1));
+
+        }
+        else if (CreationIndex < DistIndex * 2)
+        {
+            indices.Add(ChunkMap.CalcIndex(DistIndex , CreationIndex + 1));
+
+        }
+        else if (CreationIndex <= DistIndex * 3)
+        {
+            indices.Add(ChunkMap.CalcIndex(DistIndex+2, CreationIndex +5));
+
+        }
+        else if (CreationIndex < DistIndex * 4)
+        {
+            indices.Add(ChunkMap.CalcIndex(DistIndex , CreationIndex - 1));
+
+        }
+
+        // rightbotDIag
+        if (CreationIndex == 0)
+        {
+            indices.Add(ChunkMap.CalcIndex(DistIndex+2, 7 + DistIndex * 4));
+        }
+        else if (CreationIndex <= DistIndex)
+        {
+            indices.Add(ChunkMap.CalcIndex(DistIndex , CreationIndex - 1));
+
+        }
+        else if (CreationIndex < DistIndex * 2)
+        {
+            indices.Add(ChunkMap.CalcIndex(DistIndex-2, CreationIndex -3));
+
+        }
+        else if (CreationIndex < DistIndex * 3)
+        {
+            indices.Add(ChunkMap.CalcIndex(DistIndex, CreationIndex + 1));
+
+        }
+        else if (CreationIndex < DistIndex * 4)
+        {
+            indices.Add(ChunkMap.CalcIndex(DistIndex +2, CreationIndex +7));
+
+        }
+
+        return indices;
+    }
+}
+
+public class ChunkMap
+{
+    public Dictionary<int,Chunk> _map=new Dictionary<int, Chunk>();
+
+    public static int CalcIndex(Chunk chunk)
+    {
+        return chunk.CreationIndex + chunk.DistIndex * 1000;
+    }
+    public static int CalcIndex(int distIndex,int creationIndex)
+    {
+        return creationIndex + distIndex * 1000;
+    }
+
+    public void Add(Chunk chunk)
+    {
+        int index = chunk.CreationIndex + chunk.DistIndex * 1000;
+        _map[index] = chunk;
+    }
+    public Chunk Get(int index)
+    {
+        if(_map.ContainsKey(index))
+            return _map[index];
+        else
+            return null;
+        
+    }
+}
 public struct Cell
 {
     public States state;
@@ -199,11 +431,14 @@ public class Room : Area
                 for (int y = cell.yCoord - 1; y <= cell.yCoord + 1; y++)
                 {
                     //von neumann neighbours only
-                    if (x == cell.xCoord || y == cell.yCoord)
+                    if (x >= 0 && x < map.GetLength(0) && y >= 0 && y < map.GetLength(1))
                     {
-                        if (map[x, y].state == States.Wall)
+                        if (x == cell.xCoord || y == cell.yCoord)
                         {
-                            _edgeCells.Add(cell);
+                            if (map[x, y].state == States.Wall)
+                            {
+                                _edgeCells.Add(cell);
+                            }
                         }
                     }
                 }

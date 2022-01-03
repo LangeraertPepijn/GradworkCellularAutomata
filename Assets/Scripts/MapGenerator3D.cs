@@ -15,9 +15,19 @@ public class MapGenerator3D : MapGenerator
     [Header("3D unique variables")]
     [SerializeField] private bool _generateMesh = true;
 
+    public bool GenerateMesh
+    {
+        set => _generateMesh=value;
+    }
+    public int Depth
+    {
+        set => _depth = value;
+    }
+
     [CanBeNull] private Cell[,,] _map3D;
     private States[,,] _stateBuffer3D;
 
+    public Cell[,,] Map => _map3D;
 
     //3D code
 
@@ -33,8 +43,13 @@ public class MapGenerator3D : MapGenerator
         return x >= 0 && x < _width && y >= 0 && y < _height && z >= 0 && z < _depth;
     }
 
+    //private void Start()
+    //{
+    //    GenerateMap();
+    //}
+
     // Generate the Cellular Automata Map
-    protected override void GenerateMap()
+    public override void GenerateMap()
     {
 
         if (_map3D != null)
@@ -58,7 +73,9 @@ public class MapGenerator3D : MapGenerator
         if (_generateMesh)
         {
 
-            MeshGenerator meshGenerator = GetComponent<MeshGenerator>();
+            //MeshGenerator meshGenerator = GetComponent<MeshGenerator>();
+            GetComponent<MeshGenerator>();
+            MeshGenerator meshGenerator =new MeshGenerator();
             if (meshGenerator)
                 meshGenerator.GenerateMesh(_map3D, 1);
         }
@@ -107,7 +124,7 @@ public class MapGenerator3D : MapGenerator
                             wallcount += (int)_map3D[neighbourX, neighbourY, neighbourZ].state;
                         }
                     }
-                    else if (_MakeEdgesWalls)
+                    else if (_makeEdgesWalls)
                     {
                         wallcount++;
                     }
@@ -136,7 +153,7 @@ public class MapGenerator3D : MapGenerator
             {
                 for (int z = 0; z < _depth; z++)
                 {
-                    if (_MakeEdgesWalls && (x == 0 || x == _width - 1 || y == 0 || y == _height - 1 || z == 0 ||
+                    if (_makeEdgesWalls && (x == 0 || x == _width - 1 || y == 0 || y == _height - 1 || z == 0 ||
                                             z == _depth - 1))
                     {
                         _map3D[x, y, z].state = States.Wall;
@@ -888,7 +905,7 @@ public class MapGenerator3D : MapGenerator
 
             ++breakOutCounter;
 
-            if (breakOutCounter > _corridorCounter)
+            if (breakOutCounter > _breakOutValue)
                 return newCorridors;
         }
 

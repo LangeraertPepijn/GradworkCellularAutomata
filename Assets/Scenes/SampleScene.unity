@@ -152,7 +152,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5145c264a5db85544ab25e7815dd2773, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _MakeEdgesWalls: 1
+  _makeEdgesWalls: 1
   _useRandomSeed: 0
   _seed: 28/12/2021 15:00:33
   _randomFillPercent: 0.564
@@ -171,7 +171,8 @@ MonoBehaviour:
   _forceAccessibilityFromMainRoom: 1
   _corridorRadius: {x: 1, y: 2}
   _useDigger: 1
-  _corridorCounter: 90
+  _breakOutValue: 1
+  _connectionMax: 4
   _corridorSpacing: 1
   _corridorLengthMinMax: {x: 5, y: 10}
   _turnCount: 2
@@ -179,6 +180,7 @@ MonoBehaviour:
   _createDeadEnds: 0
   _width: 50
   _height: 50
+  UseNeigbours: 0
 --- !u!4 &132861040
 Transform:
   m_ObjectHideFlags: 0
@@ -401,7 +403,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1198924072
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -414,7 +416,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 159c52c506887e24ebde69a9bc4ac71c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _MakeEdgesWalls: 1
+  _makeEdgesWalls: 1
   _useRandomSeed: 0
   _seed: 30/12/2021 15:09:28
   _randomFillPercent: 0.57
@@ -433,7 +435,8 @@ MonoBehaviour:
   _forceAccessibilityFromMainRoom: 1
   _corridorRadius: {x: 1, y: 1}
   _useDigger: 1
-  _corridorCounter: 100
+  _breakOutValue: 1
+  _connectionMax: 1
   _corridorSpacing: 1
   _corridorLengthMinMax: {x: 1, y: 10}
   _turnCount: 4
@@ -518,3 +521,90 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1198924071}
   m_Mesh: {fileID: 0}
+--- !u!1 &1730513684
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1730513687}
+  - component: {fileID: 1730513686}
+  - component: {fileID: 1730513685}
+  m_Layer: 0
+  m_Name: MapGenerator Large
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1730513685
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1730513684}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc2b9a35553d02b4ab548ede42b703a5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1730513686
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1730513684}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55df90c878f192e4a847d33e0e967042, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _makeEdgesWalls: 0
+  _useRandomSeed: 0
+  _seed: 15673
+  _randomFillPercent: 0.575
+  _sizeThreshold: 5
+  _iterations: 3
+  _neighbourWallCountToChange: 4
+  _neighbourEmptyCountToChange: 4
+  _colorRegions: 1
+  _cube: {fileID: 3440554682568251086, guid: e876bbbd2b549534f86e4263de21a926, type: 3}
+  _showWalls: 1
+  _showEmpty: 1
+  _showShell: 1
+  _shellEmpty: 1
+  _makeShellSameAsNeighbour: 1
+  _connectClosestRooms: 1
+  _forceAccessibilityFromMainRoom: 1
+  _corridorRadius: {x: 1, y: 1}
+  _useDigger: 0
+  _breakOutValue: 1
+  _connectionMax: 1
+  _corridorSpacing: 1
+  _corridorLengthMinMax: {x: 1, y: 10}
+  _turnCount: 0
+  _corridorFromRoomChance: 0.7
+  _createDeadEnds: 0
+  _width: 30
+  _height: 20
+  _depth: 30
+  _generateMesh: 0
+  _is3D: 0
+--- !u!4 &1730513687
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1730513684}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.66140723, y: 7.79884, z: 9.55647}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 4
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
