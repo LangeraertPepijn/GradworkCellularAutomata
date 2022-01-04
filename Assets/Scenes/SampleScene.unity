@@ -180,7 +180,6 @@ MonoBehaviour:
   _createDeadEnds: 0
   _width: 50
   _height: 50
-  UseNeigbours: 0
 --- !u!4 &132861040
 Transform:
   m_ObjectHideFlags: 0
@@ -403,7 +402,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1198924072
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -434,7 +433,7 @@ MonoBehaviour:
   _connectClosestRooms: 1
   _forceAccessibilityFromMainRoom: 1
   _corridorRadius: {x: 1, y: 1}
-  _useDigger: 1
+  _useDigger: 0
   _breakOutValue: 1
   _connectionMax: 1
   _corridorSpacing: 1
@@ -443,9 +442,9 @@ MonoBehaviour:
   _corridorFromRoomChance: 0.7
   _createDeadEnds: 0
   _width: 32
-  _height: 20
+  _height: 32
   _depth: 32
-  _generateMesh: 0
+  _generateMesh: 1
 --- !u!4 &1198924073
 Transform:
   m_ObjectHideFlags: 0
@@ -538,7 +537,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1730513685
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -563,12 +562,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 55df90c878f192e4a847d33e0e967042, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _makeEdgesWalls: 0
+  _makeEdgesWalls: 1
   _useRandomSeed: 0
   _seed: 15673
-  _randomFillPercent: 0.575
+  _randomFillPercent: 0.594
   _sizeThreshold: 5
-  _iterations: 3
+  _iterations: 5
   _neighbourWallCountToChange: 4
   _neighbourEmptyCountToChange: 4
   _colorRegions: 1
@@ -578,7 +577,7 @@ MonoBehaviour:
   _showShell: 1
   _shellEmpty: 1
   _makeShellSameAsNeighbour: 1
-  _connectClosestRooms: 1
+  _connectClosestRooms: 0
   _forceAccessibilityFromMainRoom: 1
   _corridorRadius: {x: 1, y: 1}
   _useDigger: 0
@@ -594,6 +593,10 @@ MonoBehaviour:
   _depth: 30
   _generateMesh: 0
   _is3D: 0
+  _chunkDimensions:
+    xCoord: 3
+    yCoord: 3
+    zCoord: 1
 --- !u!4 &1730513687
 Transform:
   m_ObjectHideFlags: 0

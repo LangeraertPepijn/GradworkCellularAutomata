@@ -19,237 +19,278 @@ public enum Axis
     z = 2
 }
 
-public class Chunk
-{
-    public Cell[,] Map { get; }
-    public Cell[,,] Map3D { get; }
-    public int DistIndex { get; }
-    public int CreationIndex { get; }
+//public class Chunk
+//{
+//    public Cell[,] Map { get; set; }
+//    public Cell[,,] Map3D { get; }
+//    public int DistIndex { get; }
+//    public int CreationIndex { get; }
 
-    public Chunk(Cell[,] map,int creationIndex,int distIndex)
-    {
-        Map = map;
-        CreationIndex = creationIndex;
-        DistIndex = distIndex;
-    }
-    public Chunk(Cell[,,] map,int creationIndex, int distIndex)
-    {
-        Map3D = map;
-        CreationIndex = creationIndex;
-        DistIndex = distIndex;
-    }
+//    public Chunk(Cell[,] map,int creationIndex,int distIndex)
+//    {
+//        Map = map;
+//        CreationIndex = creationIndex;
+//        DistIndex = distIndex;
+//    }
+//    public Chunk(Cell[,,] map,int creationIndex, int distIndex)
+//    {
+//        Map3D = map;
+//        CreationIndex = creationIndex;
+//        DistIndex = distIndex;
+//    }
 
-    public List<int> GetNeighbouringIndices()
-    {
-        List<int> indices = new List<int>();
+//    //public List<int> GetNeighbouringIndices()
+//    //{
+//    //    List<int> indices = new List<int>();
 
 
-        //DistIndex*4 right
-        if (CreationIndex <= DistIndex)
-        {
-            indices.Add(ChunkMap.CalcIndex(DistIndex + 1, CreationIndex));
+//    //    //DistIndex*4 right
+//    //    if (CreationIndex <= DistIndex)
+//    //    {
+//    //        indices.Add(ChunkMap.CalcIndex(DistIndex + 1, CreationIndex));
 
-        }
-        else if (CreationIndex <= DistIndex * 3)
-        {
-            indices.Add(ChunkMap.CalcIndex(DistIndex - 1, CreationIndex + 2));
+//    //    }
+//    //    else if (CreationIndex <= DistIndex * 3)
+//    //    {
+//    //        indices.Add(ChunkMap.CalcIndex(DistIndex - 1, CreationIndex + 2));
 
-        }
-        else
-        {
-            indices.Add(ChunkMap.CalcIndex(DistIndex + 1, CreationIndex + 4));
+//    //    }
+//    //    else
+//    //    {
+//    //        indices.Add(ChunkMap.CalcIndex(DistIndex + 1, CreationIndex + 4));
 
-        }
+//    //    }
 
-        //up
-        if (CreationIndex <= DistIndex * 2)
-        {
-            indices.Add(ChunkMap.CalcIndex(DistIndex + 1, CreationIndex + 1));
+//    //    //up
+//    //    if (CreationIndex <= DistIndex * 2)
+//    //    {
+//    //        indices.Add(ChunkMap.CalcIndex(DistIndex + 1, CreationIndex + 1));
 
-        }
-        else if (CreationIndex < DistIndex * 4)
-        {
-            indices.Add(ChunkMap.CalcIndex(DistIndex - 1, CreationIndex - 3));
+//    //    }
+//    //    else if (CreationIndex < DistIndex * 4)
+//    //    {
+//    //        indices.Add(ChunkMap.CalcIndex(DistIndex - 1, CreationIndex - 3));
 
-        }
-        else
-        {
-            indices.Add(ChunkMap.CalcIndex(DistIndex + 1, 0));
+//    //    }
+//    //    else
+//    //    {
+//    //        indices.Add(ChunkMap.CalcIndex(DistIndex + 1, 0));
 
-        }
+//    //    }
 
-        //left
-        if (CreationIndex <= DistIndex)
-        {
-            indices.Add(ChunkMap.CalcIndex(DistIndex - 1, CreationIndex));
+//    //    //left
+//    //    if (CreationIndex <= DistIndex)
+//    //    {
+//    //        indices.Add(ChunkMap.CalcIndex(DistIndex - 1, CreationIndex));
 
-        }
-        else if (CreationIndex <= DistIndex * 3)
-        {
-            indices.Add(ChunkMap.CalcIndex(DistIndex + 1, CreationIndex + 2));
+//    //    }
+//    //    else if (CreationIndex <= DistIndex * 3)
+//    //    {
+//    //        indices.Add(ChunkMap.CalcIndex(DistIndex + 1, CreationIndex + 2));
 
-        }
-        else
-        {
-            indices.Add(ChunkMap.CalcIndex(DistIndex - 1, -4));
+//    //    }
+//    //    else
+//    //    {
+//    //        indices.Add(ChunkMap.CalcIndex(DistIndex - 1, -4));
 
-        }
+//    //    }
 
-        //down
-        if (CreationIndex == 0)
-        {
-            indices.Add(ChunkMap.CalcIndex(DistIndex + 1, 7 + 4 * DistIndex));
+//    //    //down
+//    //    if (CreationIndex == 0)
+//    //    {
+//    //        indices.Add(ChunkMap.CalcIndex(DistIndex + 1, 7 + 4 * DistIndex));
 
-        }
-        else if (CreationIndex <= DistIndex * 2)
-        {
-            indices.Add(ChunkMap.CalcIndex(DistIndex - 1, CreationIndex - 1));
+//    //    }
+//    //    else if (CreationIndex <= DistIndex * 2)
+//    //    {
+//    //        indices.Add(ChunkMap.CalcIndex(DistIndex - 1, CreationIndex - 1));
 
-        }
-        else if (CreationIndex < DistIndex * 4)
-        {
-            indices.Add(ChunkMap.CalcIndex(DistIndex + 1, CreationIndex + 3));
+//    //    }
+//    //    else if (CreationIndex < DistIndex * 4)
+//    //    {
+//    //        indices.Add(ChunkMap.CalcIndex(DistIndex + 1, CreationIndex + 3));
 
-        }
+//    //    }
 
-        // righttopDIag
-        if (CreationIndex <= DistIndex)
-        {
-            indices.Add(ChunkMap.CalcIndex(DistIndex + 2, CreationIndex + 1));
+//    //    // righttopDIag
+//    //    if (CreationIndex <= DistIndex)
+//    //    {
+//    //        indices.Add(ChunkMap.CalcIndex(DistIndex + 2, CreationIndex + 1));
 
-        }
-        else if (CreationIndex <= DistIndex * 2)
-        {
-            indices.Add(ChunkMap.CalcIndex(DistIndex, CreationIndex - 1));
+//    //    }
+//    //    else if (CreationIndex <= DistIndex * 2)
+//    //    {
+//    //        indices.Add(ChunkMap.CalcIndex(DistIndex, CreationIndex - 1));
 
-        }
-        else if (CreationIndex <= DistIndex * 3)
-        {
-            indices.Add(ChunkMap.CalcIndex(DistIndex - 2, CreationIndex - 5));
+//    //    }
+//    //    else if (CreationIndex <= DistIndex * 3)
+//    //    {
+//    //        indices.Add(ChunkMap.CalcIndex(DistIndex - 2, CreationIndex - 5));
 
-        }
-        else if (CreationIndex < DistIndex * 4)
-        {
-            indices.Add(ChunkMap.CalcIndex(DistIndex , CreationIndex +1));
+//    //    }
+//    //    else if (CreationIndex < DistIndex * 4)
+//    //    {
+//    //        indices.Add(ChunkMap.CalcIndex(DistIndex , CreationIndex +1));
 
-        }
-        else
-        {
+//    //    }
+//    //    else
+//    //    {
             
-            indices.Add(ChunkMap.CalcIndex(DistIndex , 0));
-        }
+//    //        indices.Add(ChunkMap.CalcIndex(DistIndex , 0));
+//    //    }
 
-        // lefttopDIag
-        if (CreationIndex < DistIndex)
-        {
-            indices.Add(ChunkMap.CalcIndex(DistIndex , CreationIndex + 1));
+//    //    // lefttopDIag
+//    //    if (CreationIndex < DistIndex)
+//    //    {
+//    //        indices.Add(ChunkMap.CalcIndex(DistIndex , CreationIndex + 1));
 
-        }
-        else if (CreationIndex <= DistIndex * 2)
-        {
-            indices.Add(ChunkMap.CalcIndex(DistIndex+2, CreationIndex + 3));
+//    //    }
+//    //    else if (CreationIndex <= DistIndex * 2)
+//    //    {
+//    //        indices.Add(ChunkMap.CalcIndex(DistIndex+2, CreationIndex + 3));
 
-        }
-        else if (CreationIndex <= DistIndex * 3)
-        {
-            indices.Add(ChunkMap.CalcIndex(DistIndex , CreationIndex - 1));
+//    //    }
+//    //    else if (CreationIndex <= DistIndex * 3)
+//    //    {
+//    //        indices.Add(ChunkMap.CalcIndex(DistIndex , CreationIndex - 1));
 
-        }
-        else if (CreationIndex < DistIndex * 4)
-        {
-            indices.Add(ChunkMap.CalcIndex(DistIndex-2, CreationIndex - 7));
+//    //    }
+//    //    else if (CreationIndex < DistIndex * 4)
+//    //    {
+//    //        indices.Add(ChunkMap.CalcIndex(DistIndex-2, CreationIndex - 7));
 
-        }
-        else
-        {
+//    //    }
+//    //    else
+//    //    {
 
-            indices.Add(ChunkMap.CalcIndex(DistIndex-2, 0));
-        }
+//    //        indices.Add(ChunkMap.CalcIndex(DistIndex-2, 0));
+//    //    }
 
 
-        // leftbotDIag
-        if(CreationIndex==0)
-        {
-            indices.Add(ChunkMap.CalcIndex(DistIndex , 3+DistIndex*4));
-        }
-        else if (CreationIndex < DistIndex)
-        {
-            indices.Add(ChunkMap.CalcIndex(DistIndex-2, CreationIndex - 1));
+//    //    // leftbotDIag
+//    //    if(CreationIndex==0)
+//    //    {
+//    //        indices.Add(ChunkMap.CalcIndex(DistIndex , 3+DistIndex*4));
+//    //    }
+//    //    else if (CreationIndex < DistIndex)
+//    //    {
+//    //        indices.Add(ChunkMap.CalcIndex(DistIndex-2, CreationIndex - 1));
 
-        }
-        else if (CreationIndex < DistIndex * 2)
-        {
-            indices.Add(ChunkMap.CalcIndex(DistIndex , CreationIndex + 1));
+//    //    }
+//    //    else if (CreationIndex < DistIndex * 2)
+//    //    {
+//    //        indices.Add(ChunkMap.CalcIndex(DistIndex , CreationIndex + 1));
 
-        }
-        else if (CreationIndex <= DistIndex * 3)
-        {
-            indices.Add(ChunkMap.CalcIndex(DistIndex+2, CreationIndex +5));
+//    //    }
+//    //    else if (CreationIndex <= DistIndex * 3)
+//    //    {
+//    //        indices.Add(ChunkMap.CalcIndex(DistIndex+2, CreationIndex +5));
 
-        }
-        else if (CreationIndex < DistIndex * 4)
-        {
-            indices.Add(ChunkMap.CalcIndex(DistIndex , CreationIndex - 1));
+//    //    }
+//    //    else if (CreationIndex < DistIndex * 4)
+//    //    {
+//    //        indices.Add(ChunkMap.CalcIndex(DistIndex , CreationIndex - 1));
 
-        }
+//    //    }
 
-        // rightbotDIag
-        if (CreationIndex == 0)
-        {
-            indices.Add(ChunkMap.CalcIndex(DistIndex+2, 7 + DistIndex * 4));
-        }
-        else if (CreationIndex <= DistIndex)
-        {
-            indices.Add(ChunkMap.CalcIndex(DistIndex , CreationIndex - 1));
+//    //    // rightbotDIag
+//    //    if (CreationIndex == 0)
+//    //    {
+//    //        indices.Add(ChunkMap.CalcIndex(DistIndex+2, 7 + DistIndex * 4));
+//    //    }
+//    //    else if (CreationIndex <= DistIndex)
+//    //    {
+//    //        indices.Add(ChunkMap.CalcIndex(DistIndex , CreationIndex - 1));
 
-        }
-        else if (CreationIndex < DistIndex * 2)
-        {
-            indices.Add(ChunkMap.CalcIndex(DistIndex-2, CreationIndex -3));
+//    //    }
+//    //    else if (CreationIndex < DistIndex * 2)
+//    //    {
+//    //        indices.Add(ChunkMap.CalcIndex(DistIndex-2, CreationIndex -3));
 
-        }
-        else if (CreationIndex < DistIndex * 3)
-        {
-            indices.Add(ChunkMap.CalcIndex(DistIndex, CreationIndex + 1));
+//    //    }
+//    //    else if (CreationIndex < DistIndex * 3)
+//    //    {
+//    //        indices.Add(ChunkMap.CalcIndex(DistIndex, CreationIndex + 1));
 
-        }
-        else if (CreationIndex < DistIndex * 4)
-        {
-            indices.Add(ChunkMap.CalcIndex(DistIndex +2, CreationIndex +7));
+//    //    }
+//    //    else if (CreationIndex < DistIndex * 4)
+//    //    {
+//    //        indices.Add(ChunkMap.CalcIndex(DistIndex +2, CreationIndex +7));
 
-        }
+//    //    }
 
-        return indices;
-    }
-}
+//    //    return indices;
+//    //}
+//}
 
-public class ChunkMap
-{
-    public Dictionary<int,Chunk> _map=new Dictionary<int, Chunk>();
+//public class ChunkMap
+//{
+//    public Dictionary<int,Chunk> _map=new Dictionary<int, Chunk>();
 
-    public static int CalcIndex(Chunk chunk)
-    {
-        return chunk.CreationIndex + chunk.DistIndex * 1000;
-    }
-    public static int CalcIndex(int distIndex,int creationIndex)
-    {
-        return creationIndex + distIndex * 1000;
-    }
+//    public static int CalcIndex(Chunk chunk)
+//    {
+//        return chunk.CreationIndex + chunk.DistIndex * 1000;
+//    }
+//    public static int CalcIndex(int distIndex,int creationIndex)
+//    {
+//        return creationIndex + distIndex * 1000;
+//    }
+//    public static Vector3Int Test(int distIndex, int creationIndex)
+//    {
+//        int x = 0;
+//        int y = 0;
 
-    public void Add(Chunk chunk)
-    {
-        int index = chunk.CreationIndex + chunk.DistIndex * 1000;
-        _map[index] = chunk;
-    }
-    public Chunk Get(int index)
-    {
-        if(_map.ContainsKey(index))
-            return _map[index];
-        else
-            return null;
+//        if (creationIndex < distIndex * 2)
+//        {
+
+//            x = distIndex - creationIndex;
+//            if (creationIndex <= distIndex)
+//            {
+//                y = creationIndex;
+
+//            }
+//            else
+//            {
+
+//                y = distIndex*2- creationIndex; 
+//            }
+//        }
+//        else
+//        {
+
+//            x = -distIndex + creationIndex - distIndex * 2;
+//            if (creationIndex < distIndex*3)
+//            {
+//                y = distIndex*2 - creationIndex ;
+
+//            }
+//            else
+//            {
+
+//                //y = creationIndex-distIndex*2;
+//                y =  creationIndex - distIndex * 4;
+
+//            }
+//        }
+
+
+
+//        return new Vector3Int(x,y,100);
+//    }
+//    public void Add(Chunk chunk)
+//    {
+//        int index = chunk.CreationIndex + chunk.DistIndex * 1000;
+//        _map[index] = chunk;
+//    }
+//    public Chunk Get(int index)
+//    {
+//        if(_map.ContainsKey(index))
+//            return _map[index];
+//        else
+//            return null;
         
-    }
-}
+//    }
+//}
 public struct Cell
 {
     public States state;
@@ -263,6 +304,7 @@ public struct Cell
     }
 
 }
+[Serializable]
 public struct Coord
 {
     public int xCoord;

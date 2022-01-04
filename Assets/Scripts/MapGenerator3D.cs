@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -43,12 +44,49 @@ public class MapGenerator3D : MapGenerator
         return x >= 0 && x < _width && y >= 0 && y < _height && z >= 0 && z < _depth;
     }
 
-    //private void Start()
-    //{
-    //    GenerateMap();
-    //}
+    private void Start()
+    {
+        GenerateMap();
+    }
 
     // Generate the Cellular Automata Map
+
+    public async Task GenerateMapAsync()
+    {
+        if (_map3D != null)
+            ClearMap();
+        _map3D = new Cell[_width, _height, _depth];
+        _stateBuffer3D = new States[_width, _height, _depth];
+
+
+
+        if (_useRandomSeed)
+            _seed = System.DateTime.Now.ToString();
+        if (_randomNumberGenerator == null)
+            _randomNumberGenerator = new System.Random(_seed.GetHashCode());
+
+
+
+
+        RandomFillMap();
+        IterateStates();
+        ExamineMap();
+        if (_generateMesh)
+        {
+
+            MeshGenerator meshGenerator = GetComponent<MeshGenerator>();
+            if (meshGenerator)
+                meshGenerator.GenerateMesh(_map3D, 1);
+        }
+        else
+        {
+            UpdateCubes();
+        }
+
+
+
+    }
+
     public override void GenerateMap()
     {
 
@@ -73,9 +111,7 @@ public class MapGenerator3D : MapGenerator
         if (_generateMesh)
         {
 
-            //MeshGenerator meshGenerator = GetComponent<MeshGenerator>();
-            GetComponent<MeshGenerator>();
-            MeshGenerator meshGenerator =new MeshGenerator();
+            MeshGenerator meshGenerator = GetComponent<MeshGenerator>();
             if (meshGenerator)
                 meshGenerator.GenerateMesh(_map3D, 1);
         }

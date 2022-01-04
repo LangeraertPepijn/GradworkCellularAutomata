@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using UnityEngine;
 
@@ -195,6 +196,11 @@ public abstract class MapGenerator : MonoBehaviour
         }
     }
     public abstract void GenerateMap();
+
+    public async virtual Task<int> GenerateMapAsync(int index)
+    {
+        return index;
+    }
     protected abstract void ClearMap();
     protected abstract void RandomFillMap();
     protected abstract void IterateStatesOnce();

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Color = UnityEngine.Color;
 using Random = UnityEngine.Random;
@@ -12,11 +13,10 @@ public class MapGenerator2D :  MapGenerator
 {
 
     [CanBeNull] private Cell[,] _map;
-    [CanBeNull] public Cell[,] _mapSurr;
+
     private States[,] _stateBuffer;
 
-    public bool ClearCubes { get; set; } = true;
-    public bool UseNeigbours =false;
+
 
 
     public MapGenerator2D()
@@ -43,41 +43,44 @@ public class MapGenerator2D :  MapGenerator
 
     public Cell[,] Map => _map;
 
-    private void Awake()
+    public async override Task<int> GenerateMapAsync(int index)
     {
-        _mapSurr = new Cell[_width+2, _height+2];
+        //if (_map != null )
+        //    ClearMap();
+        _map = new Cell[_width, _height];
+       // if (_mapSurr == null)
+         //   _mapSurr = new Cell[_width + 2, _height + 2];
+        _stateBuffer = new States[_width, _height];
 
-    }
 
-    public void InitSurrMap()
-    {
+        for (int x = 0; x < _width; x++)
+        {
+            for (int y = 0; y < _height; y++)
+            {
+                _map[x, y].color = Color.white;
+            }
+        }
         if (_useRandomSeed)
             _seed = System.DateTime.Now.ToString();
 
         if (_randomNumberGenerator == null)
-            _randomNumberGenerator = new System.Random(_seed.GetHashCode());
-        for (int x = 0; x < (_mapSurr.GetLength(0)); x++)
-        {
-            for (int y = 0; y < _mapSurr.GetLength(1); y++)
-            {
+            _randomNumberGenerator = new System.Random(index*_seed.GetHashCode());
 
 
-
-                _mapSurr[x, y].state = (_randomNumberGenerator.Next(0, 100) / 100.0f < _randomFillPercent)
-                    ? States.Wall
-                    : States.Empty;
-                //_map[x, y].state = (Random.Range(0.0f, 1.0f) < _randomFillPercent) ? States.Wall : States.Empty;
-
-
-
-            }
-        }
+        RandomFillMap();
+        IterateStates();
+        ExamineMap();
+        UpdateCubes();
+        return index;
     }
+
+
+    
     // Generate the Cellular Automata Map
     public override void GenerateMap()
     {
-        if (_map != null&&ClearCubes)
-            ClearMap();
+       // if (_map != null)
+           // ClearMap();
         _map = new Cell[_width, _height];
         _stateBuffer = new States[_width, _height];
 
@@ -92,7 +95,9 @@ public class MapGenerator2D :  MapGenerator
         if (_useRandomSeed) 
              _seed = System.DateTime.Now.ToString();
 
-        _randomNumberGenerator ??= new System.Random(_seed.GetHashCode());
+        if (_randomNumberGenerator == null)
+            _randomNumberGenerator = new System.Random(_seed.GetHashCode());
+
 
         RandomFillMap();
         IterateStates();
@@ -131,6 +136,7 @@ public class MapGenerator2D :  MapGenerator
                 else
                 {
                     _map[x, y].state = (_randomNumberGenerator.Next(0, 100) / 100.0f < _randomFillPercent) ? States.Wall : States.Empty;
+
                     //_map[x, y].state = (Random.Range(0.0f, 1.0f) < _randomFillPercent) ? States.Wall : States.Empty;
                
                 }
@@ -155,12 +161,6 @@ public class MapGenerator2D :  MapGenerator
                     {
                         wallcount += (int)_map[neighbourX, neighbourY].state;
                     }
-                }
-                else if (UseNeigbours)
-                {
-           
-                    wallcount += (int)_mapSurr[neighbourX + 1, neighbourY + 1].state;
-     
                 }
                 else if (_makeEdgesWalls)
                 {
@@ -588,56 +588,6 @@ public class MapGenerator2D :  MapGenerator
 
             }
         }
-
-        for (int x = 0; x < _width + 2; x++)
-        {
-            for (int y = 0; y < _height + 2; y++)
-            {
-
-                if (_mapSurr[x, y].mesh)
-                {
-                    MeshRenderer renderer = _mapSurr[x, y].mesh.GetComponent<MeshRenderer>();
-                    if (renderer)
-                        renderer.material.color =
-                            (_mapSurr[x, y].state == States.Wall) ? Color.black : Color.white;
-                    if ((!_showWalls && _mapSurr[x, y].state == States.Wall) ||
-                        (!_showEmpty && _mapSurr[x, y].state == States.Empty) || (_shellEmpty && _mapSurr[x, y].neighbourCount == 8) || (!_showShell &&
-                                                                              (x == 0 || x == _width - 1 || y == 0 ||
-                                                                               y == _height - 1)))
-                        _mapSurr[x, y].mesh.gameObject.SetActive(false);
-                    else
-                        _mapSurr[x, y].mesh.gameObject.SetActive(true);
-                }
-                else
-                {
-                    Vector3 pos = new Vector3(-_width / 2 + x + 0.5f + (_width * _offset.x), -_height / 2 + y + 0.5f + (_height * _offset.y),
-                        10);
-                    _mapSurr[x, y].mesh = Instantiate(_cube);
-                    _mapSurr[x, y].mesh.transform.position = pos;
-
-                    MeshRenderer renderer = _mapSurr[x, y].mesh.GetComponent<MeshRenderer>();
-                    if (renderer)
-                    {
-                        if (_colorRegions)
-                            renderer.material.color =
-                            (_mapSurr[x, y].state == States.Wall) ? Color.black : _mapSurr[x, y].color;
-                        else
-                            renderer.material.color =
-                            (_mapSurr[x, y].state == States.Wall) ? Color.black : Color.white;
-                    }
-
-                    if ((!_showWalls && _mapSurr[x, y].state == States.Wall) ||
-                        (!_showEmpty && _mapSurr[x, y].state == States.Empty) || (_shellEmpty && _mapSurr[x, y].neighbourCount == 8) || (!_showShell &&
-                                                                              (x == 0 || x == _width - 1 || y == 0 ||
-                                                                               y == _height - 1)))
-                        _mapSurr[x, y].mesh.gameObject.SetActive(false);
-                    else
-                        _mapSurr[x, y].mesh.gameObject.SetActive(true);
-                }
-
-            }
-        }
-
     }
 
     protected override List<Corridor> DigCorridors(List<Room> rooms, List<Corridor> corridors)
@@ -863,108 +813,6 @@ public class MapGenerator2D :  MapGenerator
     }
 
 
-
-    public void UpdateCubesDebug()
-    {
-        for (int x = 0; x < _width; x++)
-        {
-            for (int y = 0; y < _height; y++)
-            {
-
-                if (_map[x, y].mesh)
-                {
-                    MeshRenderer renderer = _map[x, y].mesh.GetComponent<MeshRenderer>();
-                    if (renderer)
-                        renderer.material.color =
-                            (_map[x, y].state == States.Wall) ? Color.black : Color.white;
-                    if ((!_showWalls && _map[x, y].state == States.Wall) ||
-                        (!_showEmpty && _map[x, y].state == States.Empty) || (_shellEmpty && _map[x, y].neighbourCount == 8) || (!_showShell &&
-                                                                              (x == 0 || x == _width - 1 || y == 0 ||
-                                                                               y == _height - 1)))
-                        _map[x, y].mesh.gameObject.SetActive(false);
-                    else
-                        _map[x, y].mesh.gameObject.SetActive(true);
-                }
-                else
-                {
-                    Vector3 pos = new Vector3(-_width / 2 + x + 0.5f + (_width * _offset.x), -_height / 2 + y + 0.5f + (_height * _offset.y),
-                        0);
-                    _map[x, y].mesh = Instantiate(_cube);
-                    _map[x, y].mesh.transform.position = pos;
-
-                    MeshRenderer renderer = _map[x, y].mesh.GetComponent<MeshRenderer>();
-                    if (renderer)
-                    {
-                        if (_colorRegions)
-                            renderer.material.color =
-                            (_map[x, y].state == States.Wall) ? Color.black : _map[x, y].color;
-                        else
-                            renderer.material.color =
-                            (_map[x, y].state == States.Wall) ? Color.black : Color.white;
-                    }
-
-                    if ((!_showWalls && _map[x, y].state == States.Wall) ||
-                        (!_showEmpty && _map[x, y].state == States.Empty) || (_shellEmpty && _map[x, y].neighbourCount == 8) || (!_showShell &&
-                                                                              (x == 0 || x == _width - 1 || y == 0 ||
-                                                                               y == _height - 1)))
-                        _map[x, y].mesh.gameObject.SetActive(false);
-                    else
-                        _map[x, y].mesh.gameObject.SetActive(true);
-                }
-
-            }
-        }
-
-        for (int x = 0; x < _width + 2; x++)
-        {
-            for (int y = 0; y < _height + 2; y++)
-            {
-
-                if (_mapSurr[x, y].mesh)
-                {
-                    MeshRenderer renderer = _mapSurr[x, y].mesh.GetComponent<MeshRenderer>();
-                    if (renderer)
-                        renderer.material.color =
-                            (_mapSurr[x, y].state == States.Wall) ? Color.black : Color.white;
-                    if ((!_showWalls && _mapSurr[x, y].state == States.Wall) ||
-                        (!_showEmpty && _mapSurr[x, y].state == States.Empty) || (_shellEmpty && _mapSurr[x, y].neighbourCount == 8) || (!_showShell &&
-                                                                              (x == 0 || x == _width - 1 || y == 0 ||
-                                                                               y == _height - 1)))
-                        _mapSurr[x, y].mesh.gameObject.SetActive(false);
-                    else
-                        _mapSurr[x, y].mesh.gameObject.SetActive(true);
-                }
-                else
-                {
-                    Vector3 pos = new Vector3(-_width / 2 + x + 0.5f + (_width * _offset.x), -_height / 2 + y + 0.5f + (_height * _offset.y),
-                        10);
-                    _mapSurr[x, y].mesh = Instantiate(_cube);
-                    _mapSurr[x, y].mesh.transform.position = pos;
-
-                    MeshRenderer renderer = _mapSurr[x, y].mesh.GetComponent<MeshRenderer>();
-                    if (renderer)
-                    {
-                        if (_colorRegions)
-                            renderer.material.color =
-                            (_mapSurr[x, y].state == States.Wall) ? Color.black : _mapSurr[x, y].color;
-                        else
-                            renderer.material.color =
-                            (_mapSurr[x, y].state == States.Wall) ? Color.black : Color.white;
-                    }
-
-                    if ((!_showWalls && _mapSurr[x, y].state == States.Wall) ||
-                        (!_showEmpty && _mapSurr[x, y].state == States.Empty) || (_shellEmpty && _mapSurr[x, y].neighbourCount == 8) || (!_showShell &&
-                                                                              (x == 0 || x == _width - 1 || y == 0 ||
-                                                                               y == _height - 1)))
-                        _mapSurr[x, y].mesh.gameObject.SetActive(false);
-                    else
-                        _mapSurr[x, y].mesh.gameObject.SetActive(true);
-                }
-
-            }
-        }
-
-    }
 
     //void OnDrawGizmos()
     //{
