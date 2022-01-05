@@ -402,7 +402,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1198924072
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -537,7 +537,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1730513685
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -567,20 +567,20 @@ MonoBehaviour:
   _seed: 15673
   _randomFillPercent: 0.594
   _sizeThreshold: 5
-  _iterations: 5
-  _neighbourWallCountToChange: 4
-  _neighbourEmptyCountToChange: 4
-  _colorRegions: 1
+  _iterations: 2
+  _neighbourWallCountToChange: 14
+  _neighbourEmptyCountToChange: 16
+  _colorRegions: 0
   _cube: {fileID: 3440554682568251086, guid: e876bbbd2b549534f86e4263de21a926, type: 3}
-  _showWalls: 1
+  _showWalls: 0
   _showEmpty: 1
   _showShell: 1
-  _shellEmpty: 1
+  _shellEmpty: 0
   _makeShellSameAsNeighbour: 1
-  _connectClosestRooms: 0
+  _connectClosestRooms: 1
   _forceAccessibilityFromMainRoom: 1
   _corridorRadius: {x: 1, y: 1}
-  _useDigger: 0
+  _useDigger: 1
   _breakOutValue: 1
   _connectionMax: 1
   _corridorSpacing: 1
@@ -588,15 +588,15 @@ MonoBehaviour:
   _turnCount: 0
   _corridorFromRoomChance: 0.7
   _createDeadEnds: 0
-  _width: 30
+  _width: 20
   _height: 20
-  _depth: 30
+  _depth: 20
   _generateMesh: 0
   _is3D: 0
   _chunkDimensions:
-    xCoord: 3
-    yCoord: 3
-    zCoord: 1
+    xCoord: 2
+    yCoord: 2
+    zCoord: 2
 --- !u!4 &1730513687
 Transform:
   m_ObjectHideFlags: 0

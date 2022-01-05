@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -15,10 +16,13 @@ public class LargeMapGenerator : MapGenerator
     [SerializeField]
     private bool _is3D = false;
     [SerializeField] private Coord _chunkDimensions = new Coord(1,1,1);
-    private List<MapGenerator> _generators=new List<MapGenerator>();
+    private MapGenerator[,,] _generators ;
+    private Thread[,,] _threads;
+
+    private const int _asyncCount = 8;
+   
 
     private int _asyncCounter = 0;
-    private const int _asyncCount = 5;
 
 
     //private ChunkMap _map= new ChunkMap();
@@ -27,83 +31,153 @@ public class LargeMapGenerator : MapGenerator
     {
         if (_is3D)
         {
-            for (int i = 0; i < _asyncCount; i++)
+            _threads = new Thread[_chunkDimensions.xCoord, _chunkDimensions.yCoord, _chunkDimensions.zCoord];
+            _generators = new MapGenerator3D[_chunkDimensions.xCoord, _chunkDimensions.yCoord, _chunkDimensions.zCoord];
+            for (int x = 0; x < _chunkDimensions.xCoord; x++)
             {
-
-                MapGenerator generator = gameObject.AddComponent<MapGenerator3D>();
-                Assign(ref generator, this);
-
-                MapGenerator3D temp = generator as MapGenerator3D;
-                if (temp != null)
+                for (int y = 0; y < _chunkDimensions.yCoord; y++)
                 {
-                    temp.Depth = _depth;
-                    temp.GenerateMesh = _generateMesh;
+                    for (int z = 0; z < _chunkDimensions.zCoord; z++)
+                    {
+                        MapGenerator generator = gameObject.AddComponent<MapGenerator3D>();
+                        Assign(ref generator, this);
+
+                        MapGenerator3D temp = generator as MapGenerator3D;
+                        if (temp != null)
+                        {
+                            temp.Depth = _depth;
+                            temp.GenerateMesh = _generateMesh;
+                        }
+                        _generators[x, y, z] = generator;
+                        _generators[x,y,z].Offset = new Vector3Int(x, y, z);
+                        Vector3Int t =new Vector3Int(x, y, z);
+                        _threads[x, y, z] = (new Thread(new ThreadStart(
+                            () =>
+                            {
+                             
+                                    _generators[t.x, t.y, t.z].GenerateMap(0);
+                 
+                            })));
+
+                    }
                 }
-                _generators.Add(generator);
             }
         }
         else
         {
-            for (int i = 0; i < _asyncCount; i++)
+            _threads = new Thread[_chunkDimensions.xCoord, _chunkDimensions.yCoord, 1];
+            _generators = new MapGenerator2D[_chunkDimensions.xCoord, _chunkDimensions.yCoord, 1];
+            for (int x = 0; x < _chunkDimensions.xCoord; x++)
             {
-                MapGenerator generator = gameObject.AddComponent<MapGenerator2D>();
-                Assign(ref generator, this);
-                _generators.Add(generator);
+                for (int y = 0; y < _chunkDimensions.yCoord; y++)
+                {
+
+
+                    MapGenerator generator = gameObject.AddComponent<MapGenerator2D>();
+                    Assign(ref generator, this);
+
+                    MapGenerator2D temp = generator as MapGenerator2D;
+      
+
+                    _generators[x, y, 0] = generator;
+                    _generators[x, y, 0].Offset = new Vector3Int(x, y, 0);
+                    Vector3Int t = new Vector3Int(x, y, 0);
+                    _threads[x, y, 0] = (new Thread(new ThreadStart(
+                        () => { _generators[t.x, t.y, 0].GenerateMap(0); })));
+
+
+                }
             }
 
         }
-        GenerateMap();
+        GenerateMap(0);
+        UpdateCubes();
     }
 
 
-    public async void Test()
+
+    private void ThreadFct3D()
     {
-        //int availableGen = 1000;
-        
-        //List<Task<int>> generations = new List<Task<int>>(_asyncCounter);
-        //for (int x = 0; x < _chunkDimensions.xCoord; x++)
-        //{
-        //    for (int y = 0; y < _chunkDimensions.yCoord; y++)
-        //    {
-        //        if (_asyncCount > _asyncCounter)
-        //        {
-        //            _generators[_asyncCounter].Offset = new Vector3Int(x, y, 0);
-        //            generations.Add(_generators[_asyncCounter].GenerateMapAsync(_asyncCounter));
-        //            ++_asyncCounter;
-        //        }
-
-        //        if (generations.Count == _asyncCount)
-        //        {
-        //            if (availableGen < _asyncCounter)
-        //            {
-        //                _generators[availableGen].Offset = new Vector3Int(x, y, 0);
-        //                generations.Add( _generators[availableGen].GenerateMapAsync(availableGen));
-        //                availableGen = 1000;
-        //                ++_asyncCounter;
-        //            }
-        //            Task<int> doneTask = await Task.WhenAny(generations);
-        //            generations.Remove(doneTask);
-        //            availableGen = doneTask.Result;
-        //            --_asyncCounter;
-        //            Debug.Log("done 1"+x+"  "+ y);
-        //        }
-        //    }
-        //}
-
-
+        List<Thread> runningThreads = new List<Thread>();
         for (int x = 0; x < _chunkDimensions.xCoord; x++)
         {
             for (int y = 0; y < _chunkDimensions.yCoord; y++)
             {
-                _generators[0].Offset = new Vector3Int(x, y, 0);
-                _generators[0].GenerateMap();
+                for (int z = 0; z < _chunkDimensions.zCoord; z++)
+                {
+                    if (_asyncCounter < _asyncCount)
+                    {
+                        _threads[x,y,z].Start();
+                        _asyncCounter++;
+                        runningThreads.Add(_threads[x,y,z]);
+                    }
+
+                    if (_asyncCounter==_asyncCount)
+                    {
+                        foreach (var thread in runningThreads)
+                        {
+                            thread.Join();
+                            --_asyncCounter;
+                        }
+                    }
+
+                }
             }
         }
-        //await Task.WhenAll(generations);
+
+        if (_asyncCounter >0)
+        {
+            foreach (var thread in runningThreads)
+            {
+                thread.Join();
+                --_asyncCounter;
+            }
+        }
     }
-    public override void GenerateMap()
+
+    private void ThreadFct2D()
     {
-        Test();
+        List<Thread> runningThreads = new List<Thread>();
+        for (int x = 0; x < _chunkDimensions.xCoord; x++)
+        {
+            for (int y = 0; y < _chunkDimensions.yCoord; y++)
+            {
+
+                if (_asyncCounter < _asyncCount)
+                {
+                    _threads[x, y, 0].Start();
+                    _asyncCounter++;
+                    runningThreads.Add(_threads[x, y, 0]);
+                }
+
+                if (_asyncCounter == _asyncCount)
+                {
+                    foreach (var thread in runningThreads)
+                    {
+                        thread.Join();
+                        --_asyncCounter;
+                    }
+                }
+            }
+        }
+
+        if (_asyncCounter > 0)
+        {
+            foreach (var thread in runningThreads)
+            {
+                thread.Join();
+                --_asyncCounter;
+            }
+        }
+    }
+    public override void GenerateMap(int index)
+    {
+        if(_is3D)
+            ThreadFct3D();
+        else
+        {
+            ThreadFct2D();
+        }
     }
 
     protected override void ClearMap()
@@ -146,9 +220,12 @@ public class LargeMapGenerator : MapGenerator
         return null;
     }
 
-    protected override void UpdateCubes()
+    public override void UpdateCubes()
     {
-     
+        foreach (var generator in _generators)
+        {
+            generator.UpdateCubes();
+        }
     }
 
     protected override List<Corridor> DigCorridors(List<Room> rooms, List<Corridor> corridors)
@@ -205,7 +282,7 @@ public class LargeMapGenerator : MapGenerator
     //            counter++;
     //            for (int i = 0; i < counter*4; i++)
     //            {
-    //                Vector3Int pos = ChunkMap.Test(counter, i);
+    //                Vector3Int pos = ChunkMap.Generate2DMapAsync(counter, i);
 
     //                if (Math.Abs(pos.x)+ _chunkDimensions.xCoord / 2.0f < _chunkDimensions.xCoord&& Math.Abs(pos.y) + _chunkDimensions.yCoord / 2.0f < _chunkDimensions.yCoord)
     //                {

@@ -186,7 +186,7 @@ public abstract class MapGenerator : MonoBehaviour
     {
         if (Input.GetMouseButtonDown(0))
         {
-            GenerateMap();
+            GenerateMap(0);
         }
         else if (Input.GetMouseButtonDown(1))
         {
@@ -195,7 +195,7 @@ public abstract class MapGenerator : MonoBehaviour
             UpdateCubes();
         }
     }
-    public abstract void GenerateMap();
+    public abstract void GenerateMap(int index);
 
     public async virtual Task<int> GenerateMapAsync(int index)
     {
@@ -209,7 +209,7 @@ public abstract class MapGenerator : MonoBehaviour
     protected abstract void ExamineMap();
     protected abstract Corridor CreateCorridor(Room firstRoom, Room secondRoom, Coord firstRoomCell, Coord secondRoomCell);
     protected abstract List<Corridor> ConnectClosestRooms(List<Room> roomsToConnect);
-    protected abstract void UpdateCubes();
+    public abstract void UpdateCubes();
     protected abstract List<Corridor> DigCorridors(List<Room> rooms,List<Corridor> corridors);
 
 

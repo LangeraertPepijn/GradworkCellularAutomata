@@ -43,41 +43,41 @@ public class MapGenerator2D :  MapGenerator
 
     public Cell[,] Map => _map;
 
-    public async override Task<int> GenerateMapAsync(int index)
-    {
-        //if (_map != null )
-        //    ClearMap();
-        _map = new Cell[_width, _height];
-       // if (_mapSurr == null)
-         //   _mapSurr = new Cell[_width + 2, _height + 2];
-        _stateBuffer = new States[_width, _height];
+    //public async override Task<int> GenerateMapAsync(int index)
+    //{
+    //    //if (_map != null )
+    //    //    ClearMap();
+    //    _map = new Cell[_width, _height];
+    //   // if (_mapSurr == null)
+    //     //   _mapSurr = new Cell[_width + 2, _height + 2];
+    //    _stateBuffer = new States[_width, _height];
 
 
-        for (int x = 0; x < _width; x++)
-        {
-            for (int y = 0; y < _height; y++)
-            {
-                _map[x, y].color = Color.white;
-            }
-        }
-        if (_useRandomSeed)
-            _seed = System.DateTime.Now.ToString();
+    //    for (int x = 0; x < _width; x++)
+    //    {
+    //        for (int y = 0; y < _height; y++)
+    //        {
+    //            _map[x, y].color = Color.white;
+    //        }
+    //    }
+    //    if (_useRandomSeed)
+    //        _seed = System.DateTime.Now.ToString();
 
-        if (_randomNumberGenerator == null)
-            _randomNumberGenerator = new System.Random(index*_seed.GetHashCode());
+    //    if (_randomNumberGenerator == null)
+    //        _randomNumberGenerator = new System.Random(index*_seed.GetHashCode());
 
 
-        RandomFillMap();
-        IterateStates();
-        ExamineMap();
-        UpdateCubes();
-        return index;
-    }
+    //    RandomFillMap();
+    //    IterateStates();
+    //    ExamineMap();
+    //    UpdateCubes();
+    //    return index;
+    //}
 
 
     
     // Generate the Cellular Automata Map
-    public override void GenerateMap()
+    public override void GenerateMap(int index)
     {
        // if (_map != null)
            // ClearMap();
@@ -102,7 +102,7 @@ public class MapGenerator2D :  MapGenerator
         RandomFillMap();
         IterateStates();
         ExamineMap();
-        UpdateCubes();
+        //UpdateCubes();
     }
 
     // remove old cubes
@@ -538,7 +538,7 @@ public class MapGenerator2D :  MapGenerator
 
     }
 
-    protected override void UpdateCubes()
+    public override void UpdateCubes()
     {
         for (int x = 0; x < _width; x++)
         {
@@ -792,20 +792,24 @@ public class MapGenerator2D :  MapGenerator
 
     private void GetDigPos(Area room, ref Coord cell, ref Vector2Int dir)
     {
-        Coord edgeCell = room.EdgeCells[_randomNumberGenerator.Next(0, room.EdgeCells.Count)];
-
-        for (int x = edgeCell.xCoord - 1; x < edgeCell.xCoord + 1; x++)
+        if (room.EdgeCells.Count > 0)
         {
-            for (int y = edgeCell.yCoord - 1; y < edgeCell.yCoord + 1; y++)
-            {
-                //von neumann neighbourhood
-                if (IsInMap(x, y) && (x == edgeCell.xCoord || y == edgeCell.yCoord) &&
-                    _map[x, y].state == States.Wall)
-                {
 
-                    cell = edgeCell;
-                    dir = new Vector2Int(x, y) - new Vector2Int(edgeCell.xCoord, edgeCell.yCoord);
-                    return;
+            Coord edgeCell = room.EdgeCells[_randomNumberGenerator.Next(0, room.EdgeCells.Count)];
+
+            for (int x = edgeCell.xCoord - 1; x < edgeCell.xCoord + 1; x++)
+            {
+                for (int y = edgeCell.yCoord - 1; y < edgeCell.yCoord + 1; y++)
+                {
+                    //von neumann neighbourhood
+                    if (IsInMap(x, y) && (x == edgeCell.xCoord || y == edgeCell.yCoord) &&
+                        _map[x, y].state == States.Wall)
+                    {
+
+                        cell = edgeCell;
+                        dir = new Vector2Int(x, y) - new Vector2Int(edgeCell.xCoord, edgeCell.yCoord);
+                        return;
+                    }
                 }
             }
         }

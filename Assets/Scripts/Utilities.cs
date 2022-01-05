@@ -235,7 +235,7 @@ public enum Axis
 //    {
 //        return creationIndex + distIndex * 1000;
 //    }
-//    public static Vector3Int Test(int distIndex, int creationIndex)
+//    public static Vector3Int Generate2DMapAsync(int distIndex, int creationIndex)
 //    {
 //        int x = 0;
 //        int y = 0;

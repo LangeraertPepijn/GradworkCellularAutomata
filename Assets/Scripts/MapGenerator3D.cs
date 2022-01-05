@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -46,52 +47,18 @@ public class MapGenerator3D : MapGenerator
 
     private void Start()
     {
-        GenerateMap();
+        GenerateMap(0);
     }
 
     // Generate the Cellular Automata Map
 
-    public async Task GenerateMapAsync()
+    
+
+    public override void GenerateMap(int index)
     {
-        if (_map3D != null)
-            ClearMap();
-        _map3D = new Cell[_width, _height, _depth];
-        _stateBuffer3D = new States[_width, _height, _depth];
-
-
-
-        if (_useRandomSeed)
-            _seed = System.DateTime.Now.ToString();
-        if (_randomNumberGenerator == null)
-            _randomNumberGenerator = new System.Random(_seed.GetHashCode());
-
-
-
-
-        RandomFillMap();
-        IterateStates();
-        ExamineMap();
-        if (_generateMesh)
-        {
-
-            MeshGenerator meshGenerator = GetComponent<MeshGenerator>();
-            if (meshGenerator)
-                meshGenerator.GenerateMesh(_map3D, 1);
-        }
-        else
-        {
-            UpdateCubes();
-        }
-
-
-
-    }
-
-    public override void GenerateMap()
-    {
-
-        if (_map3D != null)
-            ClearMap();
+        
+        //if (_map3D != null)
+        //    ClearMap();
         _map3D = new Cell[_width, _height, _depth];
         _stateBuffer3D = new States[_width, _height, _depth];
 
@@ -117,11 +84,10 @@ public class MapGenerator3D : MapGenerator
         }
         else
         {
-            UpdateCubes();
+            //UpdateCubes();
         }
 
-
-
+       
     }
 
     // remove old cubes
@@ -297,7 +263,7 @@ public class MapGenerator3D : MapGenerator
                     }
                 }
             }
-            Debug.Log("Iteration Done");
+           // Debug.Log("Iteration Done");
         }
     }
 
@@ -727,7 +693,7 @@ public class MapGenerator3D : MapGenerator
     // changes the cells in a radius to empty
     private List<Coord> DrawSphere(Coord cell,Color color)
     {
-        int radius = Random.Range(_corridorRadius.x, _corridorRadius.y);
+        int radius = _randomNumberGenerator.Next(_corridorRadius.x, _corridorRadius.y);
         List<Coord> cells = new List<Coord>();
         for (int x = -radius; x < radius; x++)
         {
@@ -779,44 +745,46 @@ public class MapGenerator3D : MapGenerator
         return corridor;
     }
 
-    protected override void UpdateCubes()
+    public override void UpdateCubes()
     {
+        GameObject chunk = new GameObject("Chunk");
         for (int x = 0; x < _width; x++)
         {
             for (int y = 0; y < _height; y++)
             {
                 for (int z = 0; z < _depth; z++)
                 {
-                    if (_map3D[x, y, z].mesh)
-                    {
-                        MeshRenderer renderer = _map3D[x, y, z].mesh.GetComponent<MeshRenderer>();
-                        if (renderer)
-                        {
-                            if (_map3D[x, y, z].color == new Color())
-                            {
-                                renderer.material.color = (_map3D[x, y, z].state == States.Wall) ? Color.black : Color.white;
-                            }
-                            else
-                            {
+                    //if (_map3D[x, y, z].mesh)
+                    //{
+                    //    MeshRenderer renderer = _map3D[x, y, z].mesh.GetComponent<MeshRenderer>();
+                    //    if (renderer)
+                    //    {
+                    //        if (_map3D[x, y, z].color == new Color())
+                    //        {
+                    //            renderer.material.color = (_map3D[x, y, z].state == States.Wall) ? Color.black : Color.white;
+                    //        }
+                    //        else
+                    //        {
 
-                                renderer.material.color = _map3D[x, y, z].color;
-                            }
-                        }
+                    //            renderer.material.color = _map3D[x, y, z].color;
+                    //        }
+                    //    }
 
-                        if ((!_showWalls && _map3D[x, y, z].state == States.Wall) ||
-                            (!_showEmpty && _map3D[x, y, z].state == States.Empty) || (_shellEmpty && _map3D[x, y, z].neighbourCount == 26)
-                            || (!_showShell &&
-                                (x == 0 || x == _width - 1 || y == 0 || y == _height - 1 || z == 0 || z == _depth - 1)))
-                            _map3D[x, y, z].mesh.gameObject.SetActive(false);
-                        else
-                            _map3D[x, y, z].mesh.gameObject.SetActive(true);
-                    }
-                    else
+                    //    if ((!_showWalls && _map3D[x, y, z].state == States.Wall) ||
+                    //        (!_showEmpty && _map3D[x, y, z].state == States.Empty) || (_shellEmpty && _map3D[x, y, z].neighbourCount == 26)
+                    //        || (!_showShell &&
+                    //            (x == 0 || x == _width - 1 || y == 0 || y == _height - 1 || z == 0 || z == _depth - 1)))
+                    //        _map3D[x, y, z].mesh.gameObject.SetActive(false);
+                    //    else
+                    //        _map3D[x, y, z].mesh.gameObject.SetActive(true);
+                    //}
+                    //else
                     {
-                        Vector3 pos = new Vector3(-_width / 2 + x , -_height / 2 + y ,
-                            -_depth / 2 + z );
-                        _map3D[x, y, z].mesh = Instantiate(_cube);
-                        _map3D[x, y, z].mesh.transform.position = pos;
+                        Vector3 pos = new Vector3(-_width / 2 + x + (_width * _offset.x), -_height / 2 + y + (_height * _offset.y),
+                            -_depth / 2 + z + (_depth * _offset.z));
+                        //_map3D[x, y, z].mesh = Instantiate(_cube,pos,Quaternion.identity);
+                        _map3D[x, y, z].mesh = Instantiate(_cube,pos,Quaternion.identity,chunk.transform);
+                        //_map3D[x, y, z].mesh.transform.position = pos;
 
                         MeshRenderer renderer = _map3D[x, y, z].mesh.GetComponent<MeshRenderer>();
                         if (renderer)
