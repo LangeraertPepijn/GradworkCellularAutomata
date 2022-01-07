@@ -175,18 +175,19 @@ public abstract class MapGenerator : MonoBehaviour
         dst._width = src._width;
         dst._height = src._height;
     }
-    
+
     // Start is called before the first frame update
     //protected void Start()
     //{
     //    GenerateMap();
     //}
 
+
     protected void Update()
     {
         if (Input.GetMouseButtonDown(0))
         {
-            GenerateMap(0);
+            GenerateMap();
         }
         else if (Input.GetMouseButtonDown(1))
         {
@@ -195,8 +196,9 @@ public abstract class MapGenerator : MonoBehaviour
             UpdateCubes();
         }
     }
-    public abstract void GenerateMap(int index);
-
+    public abstract Cell[,,] GetMap();
+    public abstract void SetMap(Cell[,,] map);
+    public abstract void GenerateMap();
     public async virtual Task<int> GenerateMapAsync(int index)
     {
         return index;
@@ -206,12 +208,10 @@ public abstract class MapGenerator : MonoBehaviour
     protected abstract void IterateStatesOnce();
     protected abstract void IterateStates();
     protected abstract List<List<Coord>> GetRegionsOfState(States state);
-    protected abstract void ExamineMap();
+    public abstract void ExamineMap();
     protected abstract Corridor CreateCorridor(Room firstRoom, Room secondRoom, Coord firstRoomCell, Coord secondRoomCell);
     protected abstract List<Corridor> ConnectClosestRooms(List<Room> roomsToConnect);
     public abstract void UpdateCubes();
     protected abstract List<Corridor> DigCorridors(List<Room> rooms,List<Corridor> corridors);
-
-
-
+    
 }

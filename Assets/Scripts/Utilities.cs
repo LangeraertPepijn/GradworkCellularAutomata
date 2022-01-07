@@ -21,14 +21,14 @@ public enum Axis
 
 //public class Chunk
 //{
-//    public Cell[,] Map { get; set; }
+//    public Cell[,] GetMap { get; set; }
 //    public Cell[,,] Map3D { get; }
 //    public int DistIndex { get; }
 //    public int CreationIndex { get; }
 
 //    public Chunk(Cell[,] map,int creationIndex,int distIndex)
 //    {
-//        Map = map;
+//        GetMap = map;
 //        CreationIndex = creationIndex;
 //        DistIndex = distIndex;
 //    }
@@ -297,7 +297,7 @@ public struct Cell
     public GameObject mesh;
     public int neighbourCount;
     public Color color;
-
+    public Coord coord;
     public override string ToString()
     {
         return "state: " + (state == States.Empty ? "Empty" : "Wall");
@@ -338,7 +338,7 @@ public struct Coord
     }
     public override string ToString()
     {
-        return "x: " + xCoord+ "x: " + " " + yCoord+ "x: "+zCoord;
+        return "x: " + xCoord+ "Y: " + " " + yCoord+ "Z: "+zCoord;
     }
     public static implicit operator Vector3Int(Coord value) => new Vector3Int(value.xCoord, value.yCoord, value.zCoord);
     public static implicit operator Vector2Int(Coord value) => new Vector2Int(value.xCoord, value.yCoord);

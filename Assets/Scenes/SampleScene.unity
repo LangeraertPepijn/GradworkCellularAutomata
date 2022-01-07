@@ -365,7 +365,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
   m_LocalRotation: {x: 0.38268343, y: 0, z: 0, w: 0.92387956}
-  m_LocalPosition: {x: 0, y: 50, z: -70}
+  m_LocalPosition: {x: 37.4, y: 80.8, z: -70}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -569,7 +569,7 @@ MonoBehaviour:
   _sizeThreshold: 5
   _iterations: 2
   _neighbourWallCountToChange: 14
-  _neighbourEmptyCountToChange: 16
+  _neighbourEmptyCountToChange: 15
   _colorRegions: 0
   _cube: {fileID: 3440554682568251086, guid: e876bbbd2b549534f86e4263de21a926, type: 3}
   _showWalls: 0
@@ -579,8 +579,8 @@ MonoBehaviour:
   _makeShellSameAsNeighbour: 1
   _connectClosestRooms: 1
   _forceAccessibilityFromMainRoom: 1
-  _corridorRadius: {x: 1, y: 1}
-  _useDigger: 1
+  _corridorRadius: {x: 1, y: 3}
+  _useDigger: 0
   _breakOutValue: 1
   _connectionMax: 1
   _corridorSpacing: 1
@@ -592,7 +592,7 @@ MonoBehaviour:
   _height: 20
   _depth: 20
   _generateMesh: 0
-  _is3D: 0
+  _is3D: 1
   _chunkDimensions:
     xCoord: 2
     yCoord: 2

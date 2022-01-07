@@ -41,7 +41,6 @@ public class MapGenerator2D :  MapGenerator
         return x >= 0 && x < _width && y >= 0 && y < _height;
     }
 
-    public Cell[,] Map => _map;
 
     //public async override Task<int> GenerateMapAsync(int index)
     //{
@@ -76,8 +75,40 @@ public class MapGenerator2D :  MapGenerator
 
 
     
-    // Generate the Cellular Automata Map
-    public override void GenerateMap(int index)
+    // Generate the Cellular Automata GetMap
+    public override Cell[,,] GetMap()
+    {
+        if (_map != null)
+        {
+
+            Cell[,,] map = new Cell[_width, _height, 1];
+            for (int x = 0; x < _width; x++)
+            {
+                for (int y = 0; y < _height; y++)
+                {
+                    if (_map != null) map[x, y, 0] = _map[x, y];
+                }
+            }
+
+            return map;
+        }
+
+        return null;
+    }
+
+    public override void SetMap(Cell[,,] map)
+    {
+        for (int x = 0; x < _width; x++)
+        {
+            for (int y = 0; y < _height; y++)
+            {
+                if (_map != null) _map[x, y] = map[x, y,0];
+            }
+
+        }
+    }
+
+    public override void GenerateMap()
     {
        // if (_map != null)
            // ClearMap();
@@ -128,6 +159,7 @@ public class MapGenerator2D :  MapGenerator
         {
             for (int y = 0; y < _height; y++)
             {
+                _map[x, y].coord = new Coord(x, y);
                 if (_makeEdgesWalls && (x == 0 || x == _width - 1 || y == 0 || y == _height - 1))
                 { 
                     _map[x, y].state = States.Wall;
@@ -310,21 +342,21 @@ public class MapGenerator2D :  MapGenerator
     }
 
     // if the room is too small remove it
-    protected override void ExamineMap()
+    public override void ExamineMap()
     {
         List<List<Coord>> regions = GetRegionsOfState(States.Empty);
         List<Room> survivingRooms = new List<Room>();
 
         foreach (List<Coord> region in regions)
         {
-            if (region.Count < _sizeThreshold)
-            {
-                foreach (Coord cell in region)
-                {
-                    _map[cell.xCoord, cell.yCoord].state = States.Wall;
-                }
-            }
-            else
+            //if (region.Count < _sizeThreshold)
+            //{
+            //    foreach (Coord cell in region)
+            //    {
+            //        _map[cell.xCoord, cell.yCoord].state = States.Wall;
+            //    }
+            //}
+            //else
             {
                 survivingRooms.Add(new Room(region, _map));
             }
@@ -453,7 +485,7 @@ public class MapGenerator2D :  MapGenerator
 
      private  List<Coord> DrawCircle(Coord cell)
     {
-        int radius = Random.Range(_corridorRadius.x, _corridorRadius.y);
+        int radius = _randomNumberGenerator.Next(_corridorRadius.x, _corridorRadius.y);
 
         List<Coord> cells = new List<Coord>();
         for (int x = -radius; x < radius; x++)

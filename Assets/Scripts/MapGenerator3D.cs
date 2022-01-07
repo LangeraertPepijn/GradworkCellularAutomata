@@ -29,7 +29,7 @@ public class MapGenerator3D : MapGenerator
     [CanBeNull] private Cell[,,] _map3D;
     private States[,,] _stateBuffer3D;
 
-    public Cell[,,] Map => _map3D;
+
 
     //3D code
 
@@ -47,14 +47,23 @@ public class MapGenerator3D : MapGenerator
 
     private void Start()
     {
-        GenerateMap(0);
+        GenerateMap();
     }
 
-    // Generate the Cellular Automata Map
+    // Generate the Cellular Automata GetMap
 
-    
 
-    public override void GenerateMap(int index)
+    public override Cell[,,] GetMap()
+    {
+        return _map3D;
+    }
+
+    public override void SetMap(Cell[,,] map)
+    {
+        _map3D = map;
+    }
+
+    public override void GenerateMap()
     {
         
         //if (_map3D != null)
@@ -155,6 +164,7 @@ public class MapGenerator3D : MapGenerator
             {
                 for (int z = 0; z < _depth; z++)
                 {
+                    _map3D[x, y, z].coord = new Coord(x,y,z);
                     if (_makeEdgesWalls && (x == 0 || x == _width - 1 || y == 0 || y == _height - 1 || z == 0 ||
                                             z == _depth - 1))
                     {
@@ -368,8 +378,9 @@ public class MapGenerator3D : MapGenerator
        
     }
     // if the room is too small remove it
-    protected override void ExamineMap()
+    public override void ExamineMap()
     {
+        Debug.Log("startExamine");
         List<List<Coord>> regions = GetRegionsOfState(States.Empty);
         List<Room> survivingRooms = new List<Room>();
 
@@ -731,7 +742,7 @@ public class MapGenerator3D : MapGenerator
         _map3D[firstRoomCell.xCoord, firstRoomCell.yCoord, firstRoomCell.zCoord].color.g = 1;
         _map3D[secondRoomCell.xCoord, secondRoomCell.yCoord, secondRoomCell.zCoord].color.g = 1;
         Debug.DrawLine(posFirstCell, posSecondCell, Color.red, 50);
-        Debug.Log("ConnectionFound");
+
 
         List<Coord> line = GetLine(firstRoomCell, secondRoomCell);
         Corridor corridor = new Corridor();
