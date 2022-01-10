@@ -24,6 +24,7 @@ public abstract class MapGenerator : MonoBehaviour
     [SerializeField] protected bool _showEmpty = true;
     [SerializeField] protected bool _showShell = true;
     [SerializeField] protected bool _shellEmpty = true;
+    [SerializeField] protected bool _visualize = true;
     [SerializeField] protected bool _makeShellSameAsNeighbour = true;
 
     [Space(20)] [Header("Shortest connections")] [Header("Connection variables")] [SerializeField]
@@ -63,82 +64,82 @@ public abstract class MapGenerator : MonoBehaviour
     protected MapGenerator()
     {}
 
-    public MapGenerator(
+   // public MapGenerator(
 
-    //[Header("Layout variables")] [SerializeField]
-    bool makeEdgesWalls,
-    bool useRandomSeed,
-    string seed,
-    float randomFillPercent,
-    int sizeThreshold,
-    int iterations,
-    int neighbourWallCountToChange,
-    int neighbourEmptyCountToChange,
+   // //[Header("Layout variables")] [SerializeField]
+   // bool makeEdgesWalls,
+   // bool useRandomSeed,
+   // string seed,
+   // float randomFillPercent,
+   // int sizeThreshold,
+   // int iterations,
+   // int neighbourWallCountToChange,
+   // int neighbourEmptyCountToChange,
 
-    //[Space(20)] [Header("Visualization variables")] [SerializeField]
-    bool colorRegions,
-    GameObject cube,
-    bool showWalls,
-    bool showEmpty,
-    bool showShell,
-    bool shellEmpty,
-    bool makeShellSameAsNeighbour,
+   // //[Space(20)] [Header("Visualization variables")] [SerializeField]
+   // bool colorRegions,
+   // GameObject cube,
+   // bool showWalls,
+   // bool showEmpty,
+   // bool showShell,
+   // bool shellEmpty,
+   // bool makeShellSameAsNeighbour,
 
-    //[Space(20)] [Header("Shortest connections")] [Header("Connection variables")] [SerializeField]
-    bool connectClosestRooms,
-    bool forceAccessibilityFromMainRoom,
-    Vector2Int corridorRadius,
+   // //[Space(20)] [Header("Shortest connections")] [Header("Connection variables")] [SerializeField]
+   // bool connectClosestRooms,
+   // bool forceAccessibilityFromMainRoom,
+   // Vector2Int corridorRadius,
 
-   // [Header("Digger connections")] [SerializeField]
-    bool useDigger,
-    int breakOutValue,
-    int connectionMax,
-    int corridorSpacing,
-    Vector2Int corridorLengthMinMax,
-    int turnCount,
-    float corridorFromRoomChance,
-    bool createDeadEnds,
+   //// [Header("Digger connections")] [SerializeField]
+   // bool useDigger,
+   // int breakOutValue,
+   // int connectionMax,
+   // int corridorSpacing,
+   // Vector2Int corridorLengthMinMax,
+   // int turnCount,
+   // float corridorFromRoomChance,
+   // bool createDeadEnds,
 
-    //[Header("Digger connections")] [SerializeField]
-    int width,
-    int height)
-
-
-    {
-        _makeEdgesWalls = makeEdgesWalls;
-        _useRandomSeed = useRandomSeed;
-        _seed = seed;
-        _randomFillPercent = randomFillPercent;
-        _sizeThreshold = sizeThreshold;
-        _iterations = iterations;
-        _neighbourWallCountToChange = neighbourWallCountToChange;
-        _neighbourEmptyCountToChange = neighbourEmptyCountToChange;
-
-        _colorRegions = colorRegions;
-        _cube = cube;
-        _showWalls = showWalls;
-        _showEmpty = showEmpty;
-        _showShell = showShell;
-        _shellEmpty = shellEmpty;
-        _makeShellSameAsNeighbour = makeShellSameAsNeighbour;
-
-        _connectClosestRooms = connectClosestRooms;
-        _forceAccessibilityFromMainRoom = forceAccessibilityFromMainRoom;
-        _corridorRadius = corridorRadius;
+   // //[Header("Digger connections")] [SerializeField]
+   // int width,
+   // int height)
 
 
-        _useDigger = useDigger;
-        _breakOutValue = breakOutValue;
-        _connectionMax = connectionMax;
-        _corridorSpacing = corridorSpacing;
-        _corridorLengthMinMax = corridorLengthMinMax;
-        _turnCount = turnCount;
-        _corridorFromRoomChance = corridorFromRoomChance;
-        _createDeadEnds = createDeadEnds;
+   // {
+   //     _makeEdgesWalls = makeEdgesWalls;
+   //     _useRandomSeed = useRandomSeed;
+   //     _seed = seed;
+   //     _randomFillPercent = randomFillPercent;
+   //     _sizeThreshold = sizeThreshold;
+   //     _iterations = iterations;
+   //     _neighbourWallCountToChange = neighbourWallCountToChange;
+   //     _neighbourEmptyCountToChange = neighbourEmptyCountToChange;
 
-        _width = width;
-        _height = height;
-    }
+   //     _colorRegions = colorRegions;
+   //     _cube = cube;
+   //     _showWalls = showWalls;
+   //     _showEmpty = showEmpty;
+   //     _showShell = showShell;
+   //     _shellEmpty = shellEmpty;
+   //     _makeShellSameAsNeighbour = makeShellSameAsNeighbour;
+
+   //     _connectClosestRooms = connectClosestRooms;
+   //     _forceAccessibilityFromMainRoom = forceAccessibilityFromMainRoom;
+   //     _corridorRadius = corridorRadius;
+
+
+   //     _useDigger = useDigger;
+   //     _breakOutValue = breakOutValue;
+   //     _connectionMax = connectionMax;
+   //     _corridorSpacing = corridorSpacing;
+   //     _corridorLengthMinMax = corridorLengthMinMax;
+   //     _turnCount = turnCount;
+   //     _corridorFromRoomChance = corridorFromRoomChance;
+   //     _createDeadEnds = createDeadEnds;
+
+   //     _width = width;
+   //     _height = height;
+   // }
 
     protected static void Assign(ref MapGenerator dst, in MapGenerator src)
     {
@@ -157,6 +158,7 @@ public abstract class MapGenerator : MonoBehaviour
         dst._showEmpty = src._showEmpty;
         dst._showShell = src._showShell;
         dst._shellEmpty = src._shellEmpty;
+        dst._visualize = src._visualize;
         dst._makeShellSameAsNeighbour = src._makeShellSameAsNeighbour;
 
         dst._connectClosestRooms = src._connectClosestRooms;
@@ -185,16 +187,16 @@ public abstract class MapGenerator : MonoBehaviour
 
     protected void Update()
     {
-        if (Input.GetMouseButtonDown(0))
-        {
-            GenerateMap();
-        }
-        else if (Input.GetMouseButtonDown(1))
-        {
+        //if (Input.GetMouseButtonDown(0))
+        //{
+        //    GenerateMap();
+        //}
+        //else if (Input.GetMouseButtonDown(1))
+        //{
 
-            IterateStatesOnce();
-            UpdateCubes();
-        }
+        //    IterateStatesOnce();
+        //    UpdateCubes();
+        //}
     }
     public abstract Cell[,,] GetMap();
     public abstract void SetMap(Cell[,,] map);

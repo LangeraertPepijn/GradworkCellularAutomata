@@ -133,6 +133,7 @@ public class MapGenerator2D :  MapGenerator
         RandomFillMap();
         IterateStates();
         ExamineMap();
+        
         //UpdateCubes();
     }
 

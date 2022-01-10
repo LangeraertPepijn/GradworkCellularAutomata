@@ -433,7 +433,20 @@ public class LargeMapGenerator : MapGenerator
         //    generator.UpdateCubes();
         //}
         //Debug.Log("updateCubes");
-        UpdateBigMapCubes();
+        if (_visualize)
+        {
+            if (_generateMesh)
+            {
+                MeshGenerator meshGenerator = GetComponent<MeshGenerator>();
+                if (meshGenerator)
+                    meshGenerator.GenerateMesh(_map, 1);
+            }
+            else
+            {
+                
+                UpdateBigMapCubes();
+            }
+        }
     }
 
     private void UpdateBigMapCubes()

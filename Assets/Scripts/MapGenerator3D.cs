@@ -76,7 +76,7 @@ public class MapGenerator3D : MapGenerator
         if (_useRandomSeed)
             _seed = System.DateTime.Now.ToString();
         if (_randomNumberGenerator==null)
-            _randomNumberGenerator = new System.Random(_seed.GetHashCode());
+            _randomNumberGenerator = new System.Random(_seed.GetHashCode()*(_offset.x+1)*(_offset.y+2)* (_offset.z + 3));
   
 
 
@@ -84,19 +84,22 @@ public class MapGenerator3D : MapGenerator
         RandomFillMap();
         IterateStates();
         ExamineMap();
-        if (_generateMesh)
+        //comment for large map
+        if (_visualize)
         {
+            if (_generateMesh)
+            {
 
-            MeshGenerator meshGenerator = GetComponent<MeshGenerator>();
-            if (meshGenerator)
-                meshGenerator.GenerateMesh(_map3D, 1);
-        }
-        else
-        {
-            //UpdateCubes();
+                MeshGenerator meshGenerator = GetComponent<MeshGenerator>();
+                if (meshGenerator)
+                    meshGenerator.GenerateMesh(_map3D, 1);
+            }
+            else
+            {
+                UpdateCubes();
+            }
         }
 
-       
     }
 
     // remove old cubes
@@ -145,7 +148,7 @@ public class MapGenerator3D : MapGenerator
                     }
                     else
                     {
-                        wallcount += (Random.Range(0.0f,1.0f) < _randomFillPercent) ? 1 : 0;
+                        wallcount += (_randomNumberGenerator.Next(0,100)/100.0f < _randomFillPercent) ? 1 : 0;
                     }
                 }
             }
@@ -380,7 +383,6 @@ public class MapGenerator3D : MapGenerator
     // if the room is too small remove it
     public override void ExamineMap()
     {
-        Debug.Log("startExamine");
         List<List<Coord>> regions = GetRegionsOfState(States.Empty);
         List<Room> survivingRooms = new List<Room>();
 
@@ -414,9 +416,13 @@ public class MapGenerator3D : MapGenerator
             corridors.AddRange(ConnectClosestRooms(survivingRooms));
         if (_useDigger)
         {
-            corridors.AddRange(DigCorridors(survivingRooms,corridors));
+           // corridors.AddRange(DigCorridors(survivingRooms,corridors));
+
+            DigRooms(survivingRooms, corridors);
         }
     }
+
+
 
     protected override List<Corridor> ConnectClosestRooms(List<Room> roomsToConnect)
     {
@@ -837,7 +843,7 @@ public class MapGenerator3D : MapGenerator
         {
 
 
-            if (corridors.Count > 0)
+            if (corridors.Count < 0)
             {
                 currentRoom = rooms[_randomNumberGenerator.Next(0, rooms.Count)];
                 GetDigPos(currentRoom, ref cell, ref direction);
@@ -875,8 +881,8 @@ public class MapGenerator3D : MapGenerator
                         if (currentRoom != room)
                         {
                             //color debug show end node
-                            _map3D[potentialCorridor.Last().xCoord, potentialCorridor.Last().yCoord, potentialCorridor.Last().zCoord].state = States.Empty;
-                            _map3D[potentialCorridor.Last().xCoord, potentialCorridor.Last().yCoord, potentialCorridor.Last().zCoord].color = Color.green;
+                            //_map3D[potentialCorridor.Last().xCoord, potentialCorridor.Last().yCoord, potentialCorridor.Last().zCoord].state = States.Empty;
+                            //_map3D[potentialCorridor.Last().xCoord, potentialCorridor.Last().yCoord, potentialCorridor.Last().zCoord].color = Color.green;
                             potentialCorridor.RemoveCell(potentialCorridor.Last());
 
                             if (currentRoom is Corridor corridor)
@@ -901,8 +907,6 @@ public class MapGenerator3D : MapGenerator
 
                                     _map3D[edgeCell.xCoord, edgeCell.yCoord,edgeCell.zCoord].state = States.Empty;
                                     _map3D[edgeCell.xCoord, edgeCell.yCoord,edgeCell.zCoord].color = Color.magenta;
-                                
-
                                 }
                                 newCells.AddRange(DrawSphere(edgeCell,Color.magenta));
                             }
@@ -1012,6 +1016,292 @@ public class MapGenerator3D : MapGenerator
         return null;
     }
 
+    private void DigRooms(List<Room> rooms, List<Corridor> corridors)
+    {
+        Area currentRoom = new Room();
+        Vector3Int direction = GetNewDirection(new Vector3Int());
+        Coord cell = new Coord(-10, -10);
+        List<Room> newRooms = new List<Room>();
+        List<Corridor> newCorridors = new List<Corridor>();
+        int breakOutCounter = 0;
+        while (rooms.Count > 0)
+        {
+
+            if (corridors.Count < 0)
+            {
+                currentRoom = rooms[_randomNumberGenerator.Next(0, rooms.Count)];
+                GetDigPos(currentRoom, ref cell, ref direction);
+            }
+            else
+            {
+                if (corridors.Count > 0 && _randomNumberGenerator.Next(0, 100) / 100.0f > _corridorFromRoomChance)
+                {
+
+                    currentRoom = corridors[_randomNumberGenerator.Next(0, corridors.Count - 1)];
+                    GetDigPos(currentRoom, ref cell, ref direction);
+
+                }
+                else
+                {
+                    currentRoom = rooms[_randomNumberGenerator.Next(0, rooms.Count - 1)];
+                    GetDigPos(currentRoom, ref cell, ref direction);
+
+                }
+            }
+            Corridor potentialCorridor = GeneratePotentialRoomCorridor(cell, direction);
+            if (potentialCorridor != null)
+            {
+                if (potentialCorridor.Cells.Last().xCoord < 0)
+                {
+                    potentialCorridor.Cells.Remove(potentialCorridor.Cells.Last());
+                    Room NewRoom = DigRoom(potentialCorridor.Cells.Last(), direction, rooms);
+                    if (NewRoom != null)
+                        newRooms.Add(NewRoom);
+                    potentialCorridor.RemoveCell(potentialCorridor.Last());
+
+
+                    List<Coord> newCells = new List<Coord>();
+                    foreach (Coord edgeCell in potentialCorridor.Cells)
+                    {
+                        if (_map3D != null)
+                        {
+
+                            _map3D[edgeCell.xCoord, edgeCell.yCoord, edgeCell.zCoord].state = States.Empty;
+                            _map3D[edgeCell.xCoord, edgeCell.yCoord, edgeCell.zCoord].color = Color.magenta;
+                        }
+
+                        newCells.AddRange(DrawSphere(edgeCell, Color.magenta));
+                    }
+
+                    potentialCorridor.AddCells(newCells);
+                    newCorridors.Add(potentialCorridor);
+
+
+
+                }
+                else
+                {
+                    Room roomToRemove = AddCorridor(rooms, potentialCorridor, currentRoom, ref newCorridors);
+                    rooms.Remove(roomToRemove);
+                }
+            }
+
+            ++breakOutCounter;
+
+            if (breakOutCounter > _breakOutValue)
+                return;
+        }
+    }
+
+    private Room AddCorridor(List<Room> rooms,Corridor potentialCorridor, Area currentRoom,ref List<Corridor> newCorridors)
+    {
+        Room roomToRemove = null;
+        foreach (Room room in rooms)
+        {
+
+            if (room.Cells.Contains(potentialCorridor.Last()))
+            {
+                if (currentRoom != room)
+                {
+                    //color debug show end node
+                    //_map3D[potentialCorridor.Last().xCoord, potentialCorridor.Last().yCoord, potentialCorridor.Last().zCoord].state = States.Empty;
+                    //_map3D[potentialCorridor.Last().xCoord, potentialCorridor.Last().yCoord, potentialCorridor.Last().zCoord].color = Color.green;
+                    potentialCorridor.RemoveCell(potentialCorridor.Last());
+
+                    if (currentRoom is Corridor corridor)
+                    {
+                        foreach (Room connectedRoom in corridor.ConnectedRooms)
+                        {
+                            Room.ConnectRooms(connectedRoom, room);
+                        }
+
+                        corridor.AddConnectToRoom(room);
+                    }
+                    else
+                    {
+                        Room.ConnectRooms((Room)currentRoom, room);
+                    }
+
+                    List<Coord> newCells = new List<Coord>();
+                    foreach (Coord edgeCell in potentialCorridor.Cells)
+                    {
+                        if (_map3D != null)
+                        {
+
+                            _map3D[edgeCell.xCoord, edgeCell.yCoord, edgeCell.zCoord].state = States.Empty;
+                            _map3D[edgeCell.xCoord, edgeCell.yCoord, edgeCell.zCoord].color = Color.magenta;
+                        }
+                        newCells.AddRange(DrawSphere(edgeCell, Color.magenta));
+                    }
+                    potentialCorridor.AddCells(newCells);
+                    newCorridors.Add(potentialCorridor);
+                    roomToRemove = room;
+
+                }
+
+            }
+        }
+
+        return roomToRemove;
+    }
+
+    private Corridor GeneratePotentialRoomCorridor(Coord start, Vector3Int dir)
+    {
+        Corridor potentialCorridor = new Corridor();
+        potentialCorridor.AddCell(start);
+        Coord currentCell = start;
+
+        int length = 0;
+
+        int turns = 0;
+
+        while (turns <= _turnCount)
+        {
+            ++turns;
+
+            length = _randomNumberGenerator.Next(_corridorLengthMinMax.x, _corridorLengthMinMax.y);
+
+            if (dir.y < 0.1f && dir.y > -0.1f)
+            {
+                while (length > 0)
+                {
+                    --length;
+
+                    currentCell = currentCell + dir;
+
+                    if (!IsInMap3D(currentCell.xCoord, currentCell.yCoord, currentCell.zCoord))
+                        return null;
+
+                    if (_map3D != null && _map3D[currentCell.xCoord, currentCell.yCoord, currentCell.zCoord].state ==
+                        States.Empty)
+                    {
+                        if ((Vector3Int)currentCell == (start + dir))
+                        {
+                            return null;
+                        }
+                        potentialCorridor.AddCell(currentCell);
+                        return potentialCorridor;
+                    }
+
+                    if (!CorridorSpacingCheck(currentCell, dir))
+                    {
+                        return null;
+                    }
+
+                    potentialCorridor.AddCell(currentCell);
+
+                }
+            }
+            else
+            {
+                Vector3Int offset = length * dir;
+                int sign = Math.Sign(offset.y);
+                offset.y = (int)(offset.y * 0.3f + sign);
+                Coord endCell = currentCell + offset;
+                List<Coord> line = GetLine(currentCell, endCell);
+
+                foreach (Coord cell in line)
+                {
+                    //cool if removed
+                    currentCell = cell;
+                    if (!IsInMap3D(cell.xCoord, cell.yCoord, cell.zCoord))
+                        return null;
+
+                    if (_map3D != null && _map3D[cell.xCoord, cell.yCoord, cell.zCoord].state ==
+                        States.Empty)
+                    {
+                        if ((Vector3Int)currentCell == (start + dir))
+                        {
+                            return null;
+                        }
+                        potentialCorridor.AddCell(cell);
+                        return potentialCorridor;
+                    }
+
+                    if (!CorridorSpacingCheck(currentCell, dir))
+                    {
+                        return null;
+                    }
+
+
+                    potentialCorridor.AddCell(cell);
+                }
+            }
+            dir = GetNewDirection(dir);
+        }
+
+   
+        potentialCorridor.AddCell(new Coord(-1,-1,-1));
+        return potentialCorridor;
+    }
+
+    private Room DigRoom(Coord start, Vector3Int dir,List<Room> rooms)
+    {
+
+        bool isNewRoom = true;
+        Room potentialRoom = new Room();
+        potentialRoom.Cells.Add(start);
+        Coord currentCell = start;
+
+        int width = _randomNumberGenerator.Next(4, 5);
+        int height = _randomNumberGenerator.Next(4,6); ;
+        int depth = _randomNumberGenerator.Next(4, 7); ;
+
+        int xValue = (dir.x >= 0) ? 1 : -1;
+        int zValue = (dir.x >= 0) ? 1 : -1;
+
+        for (int x = 0; Math.Abs(x) < width; x+=xValue)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                for (int z = 0; Math.Abs(z) < depth; z+=zValue)
+                {
+                    Vector3Int index = start + new Vector3Int(x, y, z);
+                    if (IsInMap3D(index.x, index.y, index.z))
+                    {
+
+                        if (isNewRoom)
+                        {
+                            if (_map3D[index.x, index.y, index.z].state == States.Empty)
+                            {
+                                foreach (Room room in rooms)
+                                {
+                                    if (room.Cells.Contains(_map3D[index.x, index.y, index.z].coord))
+                                    {
+                                        room.Cells.AddRange(potentialRoom.Cells);
+                                        potentialRoom = room;
+                                        isNewRoom = false;
+                                        break;
+                                    }
+                                }
+
+                            }
+                            else
+                            {
+
+
+                                _map3D[index.x, index.y, index.z].state = States.Empty;
+                                _map3D[index.x, index.y, index.z].color = Color.red;
+                                potentialRoom.Cells.Add(start);
+
+                            }
+                        }
+                        else
+                        {
+                            if (!potentialRoom.Cells.Contains(_map3D[index.x, index.y, index.z].coord))
+                            {
+                                _map3D[index.x, index.y, index.z].state = States.Empty;
+                                _map3D[index.x, index.y, index.z].color = Color.red;
+                                potentialRoom.Cells.Add(start);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return potentialRoom;
+    }
 
     private bool CorridorSpacingCheck(Coord cell, Vector3Int direction)
     {

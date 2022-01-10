@@ -36,6 +36,7 @@ public class MeshGenerator : MonoBehaviour
         mesh.vertices = _vertexBuffer.ToArray();
         mesh.triangles = _indexBuffer.ToArray();
         mesh.RecalculateNormals();
+        GetComponent<MeshCollider>().sharedMesh = mesh;
     }
 
     //private void OnDrawGizmos()
