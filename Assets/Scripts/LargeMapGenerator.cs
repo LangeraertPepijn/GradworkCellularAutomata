@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -12,10 +13,12 @@ public class LargeMapGenerator : MapGenerator
 
     [Space(10)] [Header("3D unique variables")] [SerializeField]
     private bool _generateMesh = true;
-
+    [SerializeField] private int _meshSizeModifier = 1;
     [Header("GetMap Type")] [SerializeField]
     private bool _is3D = false;
-
+    [SerializeField] private int _maxRoomHeight = 10;
+    [SerializeField] private int _roomCutHeight = 4;
+    [SerializeField] private int _roomCutChance = 90;
     [SerializeField] private Coord _chunkDimensions = new Coord(1, 1, 1);
     private MapGenerator[,,] _generators;
     private Thread[,,] _threads;
@@ -51,14 +54,20 @@ public class LargeMapGenerator : MapGenerator
                         {
                             temp.Depth = _depth;
                             temp.GenerateMesh = _generateMesh;
+                            temp.MaxRoomHeight = _maxRoomHeight;
+                            temp.RoomCutHeight = _roomCutHeight;
+                            temp.RoomCutChance = _roomCutChance;
+                            temp.RoomCutChance = _meshSizeModifier;
                         }
 
                         _generators[x, y, z] = generator;
+                        if(_generateMesh)
+                        _generators[x, y, z].Offset = new Vector3Int(x* _meshSizeModifier, y* _meshSizeModifier, z* _meshSizeModifier);
+                        else
                         _generators[x, y, z].Offset = new Vector3Int(x, y, z);
                         Vector3Int t = new Vector3Int(x, y, z);
                         _threads[x, y, z] = (new Thread(new ThreadStart(
                             () => { _generators[t.x, t.y, t.z].GenerateMap(); })));
-
                     }
                 }
             }
@@ -86,7 +95,7 @@ public class LargeMapGenerator : MapGenerator
                     Vector3Int t = new Vector3Int(x, y, 0);
                     _threads[x, y, 0] = (new Thread(new ThreadStart(
                         () => { _generators[t.x, t.y, 0].GenerateMap(); })));
-
+                    
 
                 }
             }
@@ -95,7 +104,7 @@ public class LargeMapGenerator : MapGenerator
 
         GenerateMap();
         CreateBigMap();
-       // UpdateCubes();
+        UpdateCubes();
         ConnectBigMap();
         CreateBigMapV2();
         UpdateCubes();
@@ -233,8 +242,6 @@ public class LargeMapGenerator : MapGenerator
 
     private void CreateBigMap()
     {
-
-
         _map = new Cell[_chunkDimensions.xCoord * _width, _chunkDimensions.yCoord * _height, _chunkDimensions.zCoord * _depth];
         
         for (int x = 0; x < _generators.GetLength(0); x++)
@@ -266,6 +273,7 @@ public class LargeMapGenerator : MapGenerator
             }
         }
     }
+
     private void CreateBigMapV2()
     {
         for (int x = 0; x < _generators.GetLength(0)-1; x++)
@@ -353,6 +361,7 @@ public class LargeMapGenerator : MapGenerator
         }
     }
 
+
     protected override void ClearMap()
     {
 
@@ -382,16 +391,15 @@ public class LargeMapGenerator : MapGenerator
     {
         if (_is3D)
         {
-
             for (int x = 0; x < _chunkDimensions.xCoord - 1; x++)
             {
                 for (int y = 0; y < _chunkDimensions.yCoord - 1; y++)
                 {
                     for (int z = 0; z < _chunkDimensions.zCoord - 1; z++)
                     {
-                        Vector3Int t = new Vector3Int(x, y, z);
+                        Vector3Int indexVector = new Vector3Int(x, y, z);
                         _threads[x, y, z] = (new Thread(new ThreadStart(
-                            () => { _generators[t.x, t.y, t.z].ExamineMap(); })));
+                            () => { _generators[indexVector.x, indexVector.y, indexVector.z].ExamineMap(); })));
 
                     }
                 }
@@ -405,9 +413,9 @@ public class LargeMapGenerator : MapGenerator
                 for (int y = 0; y < _chunkDimensions.yCoord-1; y++)
                 {
                    
-                    Vector3Int t = new Vector3Int(x, y, 0);
+                    Vector3Int indexVector = new Vector3Int(x, y, 0);
                     _threads[x, y, 0] = (new Thread(new ThreadStart(
-                        () => { _generators[t.x, t.y, 0].ExamineMap(); })));
+                        () => { _generators[indexVector.x, indexVector.y, 0].ExamineMap(); })));
 
 
                 }
@@ -439,11 +447,11 @@ public class LargeMapGenerator : MapGenerator
             {
                 MeshGenerator meshGenerator = GetComponent<MeshGenerator>();
                 if (meshGenerator)
-                    meshGenerator.GenerateMesh(_map, 1);
+                    meshGenerator.GenerateMesh(_map, _meshSizeModifier);
             }
             else
             {
-                
+
                 UpdateBigMapCubes();
             }
         }

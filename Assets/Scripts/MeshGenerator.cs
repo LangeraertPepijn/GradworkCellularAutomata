@@ -105,26 +105,37 @@ public class MeshGenerator : MonoBehaviour
     {
         AssignVertices(points);
 
-        if (points.Length >= 3)
+        for (int i = 3; i <= points.Length; i+=3)
         {
-            CreateTriangle(points[0], points[1], points[2]);
+            CreateTriangle(points[i-3], points[i-2], points[i-1]);
+            //CreateTriangle(points[i-3], points[i-1], points[i-2]);
         }
-        if (points.Length >= 6)
-        {
-            CreateTriangle(points[3], points[4], points[5]);
-        }
-        if (points.Length >= 9)
-        {
-            CreateTriangle(points[6], points[7], points[8]);
-        }
-        if (points.Length >= 12)
-        {
-            CreateTriangle(points[9], points[10], points[11]);
-        }
-        if (points.Length >= 15)
-        {
-            CreateTriangle(points[12], points[13], points[14]);
-        }
+
+        //if (points.Length >= 3)
+        //{
+        //    //CreateTriangle(points[0], points[1], points[2]);
+        //    //CreateTriangle(points[0], points[2], points[1]);
+        //}
+        //if (points.Length >= 6)
+        //{
+        //    //CreateTriangle(points[3], points[4], points[5]);
+        //    //CreateTriangle(points[3], points[5], points[4]);
+        //}
+        //if (points.Length >= 9)
+        //{
+        //    //CreateTriangle(points[6], points[7], points[8]);
+        //    //CreateTriangle(points[6], points[8], points[7]);
+        //}
+        //if (points.Length >= 12)
+        //{
+        //    //CreateTriangle(points[9], points[10], points[11]);
+        //    //CreateTriangle(points[9], points[11], points[10]);
+        //}
+        //if (points.Length >= 15)
+        //{
+        //    //CreateTriangle(points[12], points[13], points[14]);
+        //    //CreateTriangle(points[12], points[14], points[13]);
+        //}
 
     }
 

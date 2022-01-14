@@ -179,6 +179,7 @@ MonoBehaviour:
   _turnCount: 2
   _corridorFromRoomChance: 0.7
   _createDeadEnds: 0
+  _roomChance: 0.1
   _width: 50
   _height: 50
 --- !u!4 &132861040
@@ -404,7 +405,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1198924072
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -419,35 +420,40 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _makeEdgesWalls: 1
   _useRandomSeed: 0
-  _seed: 30/12/2021 15:09:28
-  _randomFillPercent: 0.57
-  _sizeThreshold: 5
-  _iterations: 5
+  _seed: 12/01/2022 12:55:43
+  _randomFillPercent: 0.555
+  _sizeThreshold: 10
+  _iterations: 10
   _neighbourWallCountToChange: 14
-  _neighbourEmptyCountToChange: 16
-  _colorRegions: 1
+  _neighbourEmptyCountToChange: 17
+  _colorRegions: 0
   _cube: {fileID: 3440554682568251086, guid: e876bbbd2b549534f86e4263de21a926, type: 3}
   _showWalls: 0
   _showEmpty: 1
   _showShell: 1
   _shellEmpty: 0
   _visualize: 1
-  _makeShellSameAsNeighbour: 1
+  _makeShellSameAsNeighbour: 0
   _connectClosestRooms: 0
   _forceAccessibilityFromMainRoom: 1
-  _corridorRadius: {x: 1, y: 1}
-  _useDigger: 1
-  _breakOutValue: 16
+  _corridorRadius: {x: 2, y: 3}
+  _useDigger: 0
+  _breakOutValue: 48
   _connectionMax: 1
   _corridorSpacing: 1
-  _corridorLengthMinMax: {x: 1, y: 10}
-  _turnCount: 4
+  _corridorLengthMinMax: {x: 5, y: 10}
+  _turnCount: 2
   _corridorFromRoomChance: 0.7
   _createDeadEnds: 0
-  _width: 32
-  _height: 32
-  _depth: 32
-  _generateMesh: 0
+  _roomChance: 0.1
+  _width: 30
+  _height: 30
+  _depth: 30
+  _generateMesh: 1
+  _meshSizeModifier: 1
+  _maxRoomHeight: 10
+  _roomCutHeight: 4
+  _roomCutChance: 90
 --- !u!4 &1198924073
 Transform:
   m_ObjectHideFlags: 0
@@ -557,7 +563,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1730513685
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -585,9 +591,9 @@ MonoBehaviour:
   _makeEdgesWalls: 1
   _useRandomSeed: 0
   _seed: 15673
-  _randomFillPercent: 0.594
-  _sizeThreshold: 5
-  _iterations: 2
+  _randomFillPercent: 0.533
+  _sizeThreshold: 10
+  _iterations: 15
   _neighbourWallCountToChange: 14
   _neighbourEmptyCountToChange: 15
   _colorRegions: 0
@@ -600,20 +606,25 @@ MonoBehaviour:
   _makeShellSameAsNeighbour: 1
   _connectClosestRooms: 1
   _forceAccessibilityFromMainRoom: 1
-  _corridorRadius: {x: 2, y: 4}
+  _corridorRadius: {x: 2, y: 3}
   _useDigger: 1
-  _breakOutValue: 1
-  _connectionMax: 1
+  _breakOutValue: 20
+  _connectionMax: 2
   _corridorSpacing: 1
-  _corridorLengthMinMax: {x: 1, y: 10}
-  _turnCount: 0
+  _corridorLengthMinMax: {x: 4, y: 10}
+  _turnCount: 2
   _corridorFromRoomChance: 0.7
   _createDeadEnds: 0
-  _width: 20
+  _roomChance: 0.1
+  _width: 30
   _height: 20
-  _depth: 20
-  _generateMesh: 0
+  _depth: 30
+  _generateMesh: 1
+  _meshSizeModifier: 2
   _is3D: 1
+  _maxRoomHeight: 12
+  _roomCutHeight: 4
+  _roomCutChance: 70
   _chunkDimensions:
     xCoord: 2
     yCoord: 2
@@ -651,7 +662,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 94fbc854db31f3442a53047be79d6d01, type: 2}
+  - {fileID: 2100000, guid: 409345ef8037d9d47b03c2a6341471af, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

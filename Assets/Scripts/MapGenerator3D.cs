@@ -16,6 +16,10 @@ public class MapGenerator3D : MapGenerator
     [Space(10)]
     [Header("3D unique variables")]
     [SerializeField] private bool _generateMesh = true;
+    [SerializeField] private int _meshSizeModifier = 1;
+    [SerializeField] private int _maxRoomHeight = 10;
+    [SerializeField] private int _roomCutHeight = 4;
+    [SerializeField] private int _roomCutChance = 90;
 
     public bool GenerateMesh
     {
@@ -25,7 +29,22 @@ public class MapGenerator3D : MapGenerator
     {
         set => _depth = value;
     }
-
+    public int MaxRoomHeight
+    {
+        set => _maxRoomHeight = value;
+    }
+    public int RoomCutHeight
+    {
+        set => _roomCutHeight = value;
+    }
+    public int RoomCutChance
+    {
+        set => _roomCutChance = value;
+    }
+    public int MeshSizeModifier
+    {
+        set => _meshSizeModifier = value;
+    }
     [CanBeNull] private Cell[,,] _map3D;
     private States[,,] _stateBuffer3D;
 
@@ -44,11 +63,11 @@ public class MapGenerator3D : MapGenerator
     {
         return x >= 0 && x < _width && y >= 0 && y < _height && z >= 0 && z < _depth;
     }
-
-    private void Start()
-    {
-        GenerateMap();
-    }
+    //comment for largeMap
+    //private void Start()
+    //{
+    //    GenerateMap();
+    //}
 
     // Generate the Cellular Automata GetMap
 
@@ -65,7 +84,6 @@ public class MapGenerator3D : MapGenerator
 
     public override void GenerateMap()
     {
-        
         //if (_map3D != null)
         //    ClearMap();
         _map3D = new Cell[_width, _height, _depth];
@@ -83,22 +101,22 @@ public class MapGenerator3D : MapGenerator
 
         RandomFillMap();
         IterateStates();
-        ExamineMap();
+        //ExamineMap();
         //comment for large map
-        if (_visualize)
-        {
-            if (_generateMesh)
-            {
+        //if (_visualize)
+        //{
+        //    if (_generateMesh)
+        //    {
 
-                MeshGenerator meshGenerator = GetComponent<MeshGenerator>();
-                if (meshGenerator)
-                    meshGenerator.GenerateMesh(_map3D, 1);
-            }
-            else
-            {
-                UpdateCubes();
-            }
-        }
+        //        MeshGenerator meshGenerator = GetComponent<MeshGenerator>();
+        //        if (meshGenerator)
+        //            meshGenerator.GenerateMesh(_map3D, _meshSizeModifier);
+        //    }
+        //    else
+        //    {
+        //        UpdateCubes();
+        //    }
+        //}
 
     }
 
@@ -157,7 +175,7 @@ public class MapGenerator3D : MapGenerator
         return wallcount;
     }
 
-  
+    
     // Fill the map with random values based on the RandomFill Percent
     protected override void RandomFillMap()
     {
@@ -251,6 +269,7 @@ public class MapGenerator3D : MapGenerator
                     for (int z = 0; z < _depth; z++)
                     {
 
+                        //_map3D[x, y, z].neighbourCount = GetSurroundingWallCountBiased(x, y, z);
                         _map3D[x, y, z].neighbourCount = GetSurroundingWallCount(x, y, z);
                         if (_map3D[x, y, z].neighbourCount > _neighbourWallCountToChange)
                         {
@@ -276,7 +295,7 @@ public class MapGenerator3D : MapGenerator
                     }
                 }
             }
-           // Debug.Log("Iteration Done");
+     
         }
     }
 
@@ -373,7 +392,7 @@ public class MapGenerator3D : MapGenerator
         {
             foreach (var cell in region)
             {
-                _map3D[cell.xCoord, cell.yCoord, cell.zCoord].color = new Color(i*1.0f/regions.Count, i * 1.0f / regions.Count, i * 1.0f / regions.Count*2, 0.7f);
+                _map3D[cell.xCoord, cell.yCoord, cell.zCoord].color = new Color((i+1)*1.0f/(regions.Count+1), (i+1) * 1.0f / (regions.Count+1), (i+1) * 1.0f / (regions.Count+1)*2, 0.7f);
             }
             i++;
         }
@@ -401,7 +420,29 @@ public class MapGenerator3D : MapGenerator
                 survivingRooms.Add(new Room(region,_map3D));
             }
         }
-        if(_colorRegions)
+
+        CutLargeRooms(survivingRooms);
+
+        regions = GetRegionsOfState(States.Empty);
+        survivingRooms.Clear();
+
+        foreach (List<Coord> region in regions)
+        {
+            if (region.Count < _sizeThreshold)
+            {
+                foreach (Coord cell in region)
+                {
+                    _map3D[cell.xCoord, cell.yCoord, cell.zCoord].state = States.Wall;
+                }
+            }
+            else
+            {
+
+                survivingRooms.Add(new Room(region, _map3D));
+            }
+        }
+
+        if (_colorRegions)
             ColourRegions();
         //sort form big to small
         if (survivingRooms.Count > 0)
@@ -412,7 +453,8 @@ public class MapGenerator3D : MapGenerator
         }
 
         List<Corridor> corridors = new List<Corridor>();
-        if (_connectClosestRooms)
+        
+        if (_connectClosestRooms&&survivingRooms.Count>1)
             corridors.AddRange(ConnectClosestRooms(survivingRooms));
         if (_useDigger)
         {
@@ -422,7 +464,85 @@ public class MapGenerator3D : MapGenerator
         }
     }
 
+    private void CutLargeRooms(List<Room> rooms)
+    {
+          
+        foreach (Room room in rooms)
+        {
+            if (room.RoofIndex - room.FloorIndex > _maxRoomHeight&&_randomNumberGenerator.Next(0,100)<_roomCutChance)
+            {
+                if (_randomNumberGenerator.Next(0, 100) < 50)
+                {
 
+                    int halfRoomHeight = _randomNumberGenerator.Next(-1, 2) + room.FloorIndex +
+                                         (room.RoofIndex - room.FloorIndex) / 2;
+                    foreach (Coord cell in room.Cells)
+                    {
+                        if (cell.yCoord > halfRoomHeight - _roomCutHeight / 2 &&
+                            cell.yCoord < halfRoomHeight + _roomCutHeight / 2 &&
+                            _randomNumberGenerator.Next(0, 100) < 80)
+                        {
+                            _map3D[cell.xCoord, cell.yCoord, cell.zCoord].state = States.Wall;
+                        }
+                    }
+                }
+                else
+                {
+                    int rand = _randomNumberGenerator.Next(1, 3);
+                    if (rand == 2)
+                        rand = 3;
+                    int posNext = rand* (room.FloorIndex + (room.RoofIndex - room.FloorIndex)) / 4;
+                    if (rand == 1)
+                    {
+                        foreach (Coord cell in room.Cells)
+                        {
+                            if (cell.yCoord < posNext &&
+                                _randomNumberGenerator.Next(0, 100) < 80)
+                            {
+                                _map3D[cell.xCoord, cell.yCoord, cell.zCoord].state = States.Wall;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        foreach (Coord cell in room.Cells)
+                        {
+                            if (cell.yCoord > posNext &&
+                                _randomNumberGenerator.Next(0, 100) < 80)
+                            {
+                                _map3D[cell.xCoord, cell.yCoord, cell.zCoord].state = States.Wall;
+                            }
+                        }
+                    }
+ 
+                }
+
+                foreach (Coord cell in room.Cells)
+                {
+
+                    _map3D[cell.xCoord, cell.yCoord, cell.zCoord].neighbourCount = GetSurroundingWallCount(cell.xCoord, cell.yCoord, cell.zCoord);
+                    if (_map3D[cell.xCoord, cell.yCoord, cell.zCoord].neighbourCount > _neighbourWallCountToChange)
+                    {
+                        // _map3D[x, y,z].state = States.Wall;
+                        _stateBuffer3D[cell.xCoord, cell.yCoord, cell.zCoord] = States.Wall;
+                    }
+                    else if (26 - _map3D[cell.xCoord, cell.yCoord, cell.zCoord].neighbourCount > _neighbourEmptyCountToChange)
+                    {
+                        //_map3D[x, y,z].state = States.Empty;
+                        _stateBuffer3D[cell.xCoord, cell.yCoord, cell.zCoord] = States.Empty;
+
+                    }
+                }
+
+                foreach (Coord cell in room.Cells)
+                {
+           
+                    _map3D[cell.xCoord, cell.yCoord, cell.zCoord].state = _stateBuffer3D[cell.xCoord, cell.yCoord, cell.zCoord];
+
+                }
+            }
+        }
+    }
 
     protected override List<Corridor> ConnectClosestRooms(List<Room> roomsToConnect)
     {
@@ -473,28 +593,32 @@ public class MapGenerator3D : MapGenerator
                 //    continue;
                 for (int indexFirstRoom = 0; indexFirstRoom < firstRoom.EdgeCells.Count; indexFirstRoom++)
                 {
-                    //if (firstRoom.FloorIndex == firstRoom.EdgeCells[indexFirstRoom].yCoord || firstRoom.RoofIndex == firstRoom.EdgeCells[indexFirstRoom].yCoord)
-                    //    continue;
+                    if (firstRoom.FloorIndex == firstRoom.EdgeCells[indexFirstRoom].yCoord ||
+                        firstRoom.RoofIndex == firstRoom.EdgeCells[indexFirstRoom].yCoord)
+                        continue;
                     /* else*/
-                    if ( firstRoom.FloorIndex + 0.3f * (firstRoom.RoofIndex - firstRoom.FloorIndex) < firstRoom.EdgeCells[indexFirstRoom].yCoord)
+                    //only connect form the bottom 30%
+                    if (firstRoom.FloorIndex + 0.3f * (firstRoom.RoofIndex - firstRoom.FloorIndex) <
+                        firstRoom.EdgeCells[indexFirstRoom].yCoord)
                         continue;
                     for (int indexSecondRoom = 0; indexSecondRoom < secondRoom.EdgeCells.Count; indexSecondRoom++)
                     {
 
-                        //if (secondRoom.FloorIndex == secondRoom.EdgeCells[indexSecondRoom].yCoord || secondRoom.RoofIndex == secondRoom.EdgeCells[indexSecondRoom].yCoord)
-                        //    continue;
-                        if ( secondRoom.FloorIndex + 0.3f * (secondRoom.RoofIndex - secondRoom.FloorIndex) < secondRoom.EdgeCells[indexSecondRoom].yCoord)
+                        if (secondRoom.FloorIndex == secondRoom.EdgeCells[indexSecondRoom].yCoord ||
+                            secondRoom.RoofIndex == secondRoom.EdgeCells[indexSecondRoom].yCoord)
+                            continue;
+                        //only connect form the bottom 35%
+                        if (secondRoom.FloorIndex + 0.35f * (secondRoom.RoofIndex - secondRoom.FloorIndex) <
+                            secondRoom.EdgeCells[indexSecondRoom].yCoord)
                             continue;
 
 
                         Vector3Int dir = (Vector3Int)secondRoom.EdgeCells[indexSecondRoom] - (Vector3Int)firstRoom.EdgeCells[indexFirstRoom];
                         Vector3Int temp = new Vector3Int(dir.x, 0, dir.z);
                         //debug
-                        var angle = Vector3.Angle(dir, temp);
+                       // var angle = Vector3.Angle(dir, temp);
                         if (Vector3.Angle(dir, temp)>30||temp.Equals(Vector3Int.zero))
-                        {
                             continue;
-                        }
 
 
 
@@ -552,7 +676,7 @@ public class MapGenerator3D : MapGenerator
         int shortest = 0;
         int extra = 0;
 
-        Enum test = Axis.x;
+        Enum extraAxis = Axis.x;
         Enum longestAxis = Axis.x;
         Enum shortestAxis = Axis.x;
 
@@ -566,7 +690,7 @@ public class MapGenerator3D : MapGenerator
                 step = Math.Sign(dx);
                 gradientStep = Math.Sign(dy);
                 extraStep = Math.Sign(dz);
-                test = Axis.z;
+                extraAxis = Axis.z;
                 extra = Math.Abs(dz);
                
             }
@@ -591,7 +715,7 @@ public class MapGenerator3D : MapGenerator
                 gradientStep = Math.Sign(dz);
                 extraStep = Math.Sign(dx);
                 shortestAxis = Axis.z;
-                test = Axis.x;
+                extraAxis = Axis.x;
                 extra = Math.Abs(dx);
               
            // }
@@ -616,7 +740,7 @@ public class MapGenerator3D : MapGenerator
                 step = Math.Sign(dz);
                 gradientStep = Math.Sign(dy);
                 shortestAxis = Axis.y;
-                test = Axis.x;
+                extraAxis = Axis.x;
                 extra = Math.Abs(dx);
             
             //}
@@ -680,7 +804,7 @@ public class MapGenerator3D : MapGenerator
             if (extraGradientAccumulation >= longest)
             {
 
-                switch (test)
+                switch (extraAxis)
                 {
                     case Axis.x:
                         x += extraStep;
@@ -745,8 +869,6 @@ public class MapGenerator3D : MapGenerator
         Vector3 posFirstCell = new Vector3(-_width / 2 + firstRoomCell.xCoord + 0.5f, -_height / 2 + firstRoomCell.yCoord + 0.5f, -_depth / 2 + firstRoomCell.zCoord + 0.5f);
         Vector3 posSecondCell = new Vector3(-_width / 2 + secondRoomCell.xCoord + 0.5f, -_height / 2 + secondRoomCell.yCoord + 0.5f, -_depth / 2 + secondRoomCell.zCoord + 0.5f);
 
-        _map3D[firstRoomCell.xCoord, firstRoomCell.yCoord, firstRoomCell.zCoord].color.g = 1;
-        _map3D[secondRoomCell.xCoord, secondRoomCell.yCoord, secondRoomCell.zCoord].color.g = 1;
         Debug.DrawLine(posFirstCell, posSecondCell, Color.red, 50);
 
 
@@ -755,8 +877,10 @@ public class MapGenerator3D : MapGenerator
 
         foreach (Coord cell in line)
         {
-            corridor.AddCells(DrawSphere(cell, Color.white));
+            corridor.AddCells(DrawSphere(cell, Color.black));
         }
+        _map3D[firstRoomCell.xCoord, firstRoomCell.yCoord, firstRoomCell.zCoord].color = Color.red;
+        _map3D[secondRoomCell.xCoord, secondRoomCell.yCoord, secondRoomCell.zCoord].color = Color.red;
         corridor.AddCells(line);
         corridor.CalcEdges(_map3D);
         return corridor;
@@ -943,8 +1067,9 @@ public class MapGenerator3D : MapGenerator
         int length = 0;
 
         int turns = 0;
+        int maxTurns = _randomNumberGenerator.Next(0,_turnCount+1);
 
-        while (turns <= _turnCount)
+        while (turns <= maxTurns)
         {
             ++turns;
 
@@ -1067,10 +1192,12 @@ public class MapGenerator3D : MapGenerator
                         {
 
                             _map3D[edgeCell.xCoord, edgeCell.yCoord, edgeCell.zCoord].state = States.Empty;
-                            _map3D[edgeCell.xCoord, edgeCell.yCoord, edgeCell.zCoord].color = Color.magenta;
+                            //_map3D[edgeCell.xCoord, edgeCell.yCoord, edgeCell.zCoord].color = Color.magenta;
+                            _map3D[edgeCell.xCoord, edgeCell.yCoord, edgeCell.zCoord].color = Color.white;
                         }
 
-                        newCells.AddRange(DrawSphere(edgeCell, Color.magenta));
+                        //newCells.AddRange(DrawSphere(edgeCell, Color.magenta));
+                        newCells.AddRange(DrawSphere(edgeCell, Color.white));
                     }
 
                     potentialCorridor.AddCells(newCells);
@@ -1129,9 +1256,11 @@ public class MapGenerator3D : MapGenerator
                         {
 
                             _map3D[edgeCell.xCoord, edgeCell.yCoord, edgeCell.zCoord].state = States.Empty;
-                            _map3D[edgeCell.xCoord, edgeCell.yCoord, edgeCell.zCoord].color = Color.magenta;
+                            _map3D[edgeCell.xCoord, edgeCell.yCoord, edgeCell.zCoord].color = Color.white;
+                            //_map3D[edgeCell.xCoord, edgeCell.yCoord, edgeCell.zCoord].color = Color.magenta;
                         }
-                        newCells.AddRange(DrawSphere(edgeCell, Color.magenta));
+                        //newCells.AddRange(DrawSphere(edgeCell, Color.magenta));
+                        newCells.AddRange(DrawSphere(edgeCell, Color.white));
                     }
                     potentialCorridor.AddCells(newCells);
                     newCorridors.Add(potentialCorridor);
@@ -1154,8 +1283,9 @@ public class MapGenerator3D : MapGenerator
         int length = 0;
 
         int turns = 0;
+        int maxTurns = _randomNumberGenerator.Next(0,_turnCount+1);
 
-        while (turns <= _turnCount)
+        while (turns <= maxTurns)
         {
             ++turns;
 
@@ -1230,11 +1360,17 @@ public class MapGenerator3D : MapGenerator
             dir = GetNewDirection(dir);
         }
 
-   
-        potentialCorridor.AddCell(new Coord(-1,-1,-1));
-        return potentialCorridor;
-    }
+        if (_randomNumberGenerator.Next(0, 100) < _roomChance * 100)
+        {
 
+            potentialCorridor.AddCell(new Coord(-1, -1, -1));
+            return potentialCorridor;
+        }
+
+        return null;
+    }
+    //seed 12/01/2022 12:55:43
+    //seed 30/12/2021 15:09:28
     private Room DigRoom(Coord start, Vector3Int dir,List<Room> rooms)
     {
 

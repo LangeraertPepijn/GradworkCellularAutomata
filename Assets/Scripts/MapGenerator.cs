@@ -43,6 +43,7 @@ public abstract class MapGenerator : MonoBehaviour
     [SerializeField] [Range(1, 10)] protected int _turnCount = 0;
     [SerializeField] [Range(0, 1)] protected float _corridorFromRoomChance = 0.7f;
     [SerializeField] protected bool _createDeadEnds = false;
+    [SerializeField] [Range(0f, 1f)] protected float _roomChance = 0.1f;
 
 
 
@@ -166,6 +167,7 @@ public abstract class MapGenerator : MonoBehaviour
         dst._corridorRadius = src._corridorRadius;
 
         dst._useDigger = src._useDigger;
+        dst._roomChance = src._roomChance;
         dst._breakOutValue = src._breakOutValue;
         dst._connectionMax = src._connectionMax;
         dst._corridorSpacing = src._corridorSpacing;

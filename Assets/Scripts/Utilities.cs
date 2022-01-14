@@ -338,7 +338,7 @@ public struct Coord
     }
     public override string ToString()
     {
-        return "x: " + xCoord+ "Y: " + " " + yCoord+ "Z: "+zCoord;
+        return "x: " + xCoord+ "y: " + " " + yCoord+ "z: "+zCoord;
     }
     public static implicit operator Vector3Int(Coord value) => new Vector3Int(value.xCoord, value.yCoord, value.zCoord);
     public static implicit operator Vector2Int(Coord value) => new Vector2Int(value.xCoord, value.yCoord);
@@ -505,23 +505,26 @@ public class Room : Area
                 _roofIndex = cell.yCoord;
             if (_floorIndex > cell.yCoord)
                 _floorIndex = cell.yCoord;
-
-            for (int x = cell.xCoord - 1; x <= cell.xCoord + 1; x++)
+            if (map[cell.xCoord, cell.yCoord, cell.zCoord].neighbourCount >0)
             {
-                for (int y = cell.yCoord - 1; y <= cell.yCoord + 1; y++)
+                for (int x = cell.xCoord - 1; x <= cell.xCoord + 1; x++)
                 {
-    
-                    for (int z = cell.zCoord - 1; z <= cell.zCoord + 1; z++)
+                    for (int y = cell.yCoord - 1; y <= cell.yCoord + 1; y++)
                     {
-                        if (x >= 0 && x < map.GetLength(0) && y >= 0 && y < map.GetLength(1) && z >= 0 &&
-                            z < map.GetLength(2))
+
+                        for (int z = cell.zCoord - 1; z <= cell.zCoord + 1; z++)
                         {
-                            //von neumann neighbours only
-                            if (x == cell.xCoord || y == cell.yCoord || z == cell.zCoord)
+                            if (x >= 0 && x < map.GetLength(0) && y >= 0 && y < map.GetLength(1) && z >= 0 &&
+                                z < map.GetLength(2))
                             {
-                                if (map[x, y, z].state == States.Wall)
+                                //von neumann neighbours only
+                                if (x == cell.xCoord || y == cell.yCoord || z == cell.zCoord)
                                 {
-                                    _edgeCells.Add(cell);
+                                    if (map[x, y, z].state == States.Wall)
+                                    {
+                                        if(!_edgeCells.Contains(cell))
+                                        _edgeCells.Add(cell);
+                                    }
                                 }
                             }
                         }
@@ -1145,7 +1148,7 @@ public class CubeGrid
             {
                 for (int z = 0; z < nodeCountZ; z++)
                 {
-                    Vector3 pos = new Vector3((-mapWidth / 2.0f )+( x * size) + (size/2.0f), (-mapHeight / 2.0f) + (y * size) - (size / 2.0f),
+                    Vector3 pos = new Vector3((-mapWidth / 2.0f) + (x * size) + (size / 2.0f), (-mapHeight / 2.0f) + (y * size) - (size / 2.0f),
                         (-mapDepth / 2.0f) + (z * size) - (size / 2.0f));
 
                     controlNodes[x, y, z] = new ControlNode(pos, map[x, y, z].state, size);
