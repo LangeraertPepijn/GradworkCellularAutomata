@@ -415,14 +415,22 @@ public abstract class Area: IComparable<Area>
     protected List<Coord> _edgeCells=new List<Coord>();
     protected List<Room> _connectedRooms=new List<Room>();
     protected int _size=0;
-    protected int _floorIndex;
-    protected int _roofIndex;
+    protected int _yMin;
+    protected int _yMax;
+    protected int _xMin;
+    protected int _xMax;
+    protected int _zMin;
+    protected int _zMax;
+    protected Coord _centerCoord;
 
     public int Size => _size;
 
-    public int FloorIndex => _floorIndex;
-
-    public int RoofIndex => _roofIndex;
+    public int YMin => _yMin;
+    public int YMax => _yMax;
+    public int XMin => _xMin;
+    public int XMax => _xMax;
+    public int ZMin => _zMin;
+    public int ZMax => _zMax;
 
     public List<Room> ConnectedRooms
     {
@@ -439,7 +447,7 @@ public abstract class Area: IComparable<Area>
     {
         return _connectedRooms.Contains(otherRoom);
     }
-
+    public Coord CenterCoord => _centerCoord;
     public int CompareTo(Area other)
     {
         if (ReferenceEquals(this, other)) return 0;
@@ -495,16 +503,31 @@ public class Room : Area
         _size = roomCells.Count;
         _connectedRooms = new List<Room>();
 
-        _roofIndex = 0;
-        _floorIndex = int.MaxValue;
+        _yMax = 0;
+        _yMin = int.MaxValue;
 
+
+        _xMax = 0;
+        _xMin = int.MaxValue;
+        _zMax = 0;
+        _zMin = int.MaxValue;
         _edgeCells = new List<Coord>();
         foreach (Coord cell in roomCells)
         {
-            if (_roofIndex < cell.yCoord)
-                _roofIndex = cell.yCoord;
-            if (_floorIndex > cell.yCoord)
-                _floorIndex = cell.yCoord;
+            if (_yMax < cell.yCoord)
+                _yMax = cell.yCoord;
+            if (_yMin > cell.yCoord)
+                _yMin = cell.yCoord;
+
+            if (_xMax < cell.xCoord)
+                _xMax = cell.xCoord;
+            if (_xMin > cell.xCoord)
+                _xMin = cell.xCoord;
+                
+            if (_zMax < cell.zCoord)
+                _zMax = cell.zCoord;
+            if (_zMin > cell.zCoord)
+                _zMin = cell.zCoord;
             if (map[cell.xCoord, cell.yCoord, cell.zCoord].neighbourCount >0)
             {
                 for (int x = cell.xCoord - 1; x <= cell.xCoord + 1; x++)
@@ -517,6 +540,7 @@ public class Room : Area
                             if (x >= 0 && x < map.GetLength(0) && y >= 0 && y < map.GetLength(1) && z >= 0 &&
                                 z < map.GetLength(2))
                             {
+                                
                                 //von neumann neighbours only
                                 if (x == cell.xCoord || y == cell.yCoord || z == cell.zCoord)
                                 {
@@ -532,6 +556,9 @@ public class Room : Area
                 }
             }
         }
+
+        _centerCoord = new Coord(_xMin + (_xMax - _xMin) / 2, _yMin + (_yMax - _yMin) / 2, _zMin + (_zMax - _zMin) / 2);
+
     }
 
     public bool IsMainRoom
@@ -622,16 +649,16 @@ public class Corridor : Area
         _size = corridorCells.Count;
         _connectedRooms = new List<Room>();
 
-        _roofIndex = 0;
-        _floorIndex = int.MaxValue;
+        _yMax = 0;
+        _yMin = int.MaxValue;
 
         _edgeCells = new List<Coord>();
         foreach (Coord cell in corridorCells)
         {
-            if (_roofIndex < cell.yCoord)
-                _roofIndex = cell.yCoord;
-            if (_floorIndex > cell.yCoord)
-                _floorIndex = cell.yCoord;
+            if (_yMax < cell.yCoord)
+                _yMax = cell.yCoord;
+            if (_yMin > cell.yCoord)
+                _yMin = cell.yCoord;
 
             for (int x = cell.xCoord - 1; x <= cell.xCoord + 1; x++)
             {
@@ -668,8 +695,8 @@ public class Corridor : Area
         if(is3D)
         {
             
-            _roofIndex = 0;
-            _floorIndex = int.MaxValue;
+            _yMax = 0;
+            _yMin = int.MaxValue;
 
         }
     }
@@ -711,10 +738,10 @@ public class Corridor : Area
     {
         foreach (Coord cell in _cells)
         {
-            if (_roofIndex < cell.yCoord)
-                _roofIndex = cell.yCoord;
-            if (_floorIndex > cell.yCoord)
-                _floorIndex = cell.yCoord;
+            if (_yMax < cell.yCoord)
+                _yMax = cell.yCoord;
+            if (_yMin > cell.yCoord)
+                _yMin = cell.yCoord;
 
             for (int x = cell.xCoord - 1; x <= cell.xCoord + 1; x++)
             {

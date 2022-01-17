@@ -19,6 +19,7 @@ public class LargeMapGenerator : MapGenerator
     [SerializeField] private int _maxRoomHeight = 10;
     [SerializeField] private int _roomCutHeight = 4;
     [SerializeField] private int _roomCutChance = 90;
+    [SerializeField] private bool _mineCenter = false;
     [SerializeField] private Coord _chunkDimensions = new Coord(1, 1, 1);
     private MapGenerator[,,] _generators;
     private Thread[,,] _threads;
@@ -49,15 +50,16 @@ public class LargeMapGenerator : MapGenerator
                         MapGenerator generator = gameObject.AddComponent<MapGenerator3D>();
                         Assign(ref generator, this);
 
-                        MapGenerator3D temp = generator as MapGenerator3D;
-                        if (temp != null)
+                        MapGenerator3D generator3D = generator as MapGenerator3D;
+                        if (generator3D != null)
                         {
-                            temp.Depth = _depth;
-                            temp.GenerateMesh = _generateMesh;
-                            temp.MaxRoomHeight = _maxRoomHeight;
-                            temp.RoomCutHeight = _roomCutHeight;
-                            temp.RoomCutChance = _roomCutChance;
-                            temp.RoomCutChance = _meshSizeModifier;
+                            generator3D.Depth = _depth;
+                            generator3D.GenerateMesh = _generateMesh;
+                            generator3D.MaxRoomHeight = _maxRoomHeight;
+                            generator3D.RoomCutHeight = _roomCutHeight;
+                            generator3D.RoomCutChance = _roomCutChance;
+                            generator3D.MeshSizeModifier = _meshSizeModifier;
+                            generator3D.MineCenter = _mineCenter;
                         }
 
                         _generators[x, y, z] = generator;

@@ -20,6 +20,7 @@ public class MapGenerator3D : MapGenerator
     [SerializeField] private int _maxRoomHeight = 10;
     [SerializeField] private int _roomCutHeight = 4;
     [SerializeField] private int _roomCutChance = 90;
+    [SerializeField] private bool _mineCenter = true;
 
     public bool GenerateMesh
     {
@@ -45,6 +46,10 @@ public class MapGenerator3D : MapGenerator
     {
         set => _meshSizeModifier = value;
     }
+    public bool MineCenter
+    {
+        set => _mineCenter = value;
+    }
     [CanBeNull] private Cell[,,] _map3D;
     private States[,,] _stateBuffer3D;
 
@@ -64,10 +69,10 @@ public class MapGenerator3D : MapGenerator
         return x >= 0 && x < _width && y >= 0 && y < _height && z >= 0 && z < _depth;
     }
     //comment for largeMap
-    //private void Start()
-    //{
-    //    GenerateMap();
-    //}
+    private void Start()
+    {
+        GenerateMap();
+    }
 
     // Generate the Cellular Automata GetMap
 
@@ -101,22 +106,22 @@ public class MapGenerator3D : MapGenerator
 
         RandomFillMap();
         IterateStates();
-        //ExamineMap();
+        ExamineMap();
         //comment for large map
-        //if (_visualize)
-        //{
-        //    if (_generateMesh)
-        //    {
+        if (_visualize)
+        {
+            if (_generateMesh)
+            {
 
-        //        MeshGenerator meshGenerator = GetComponent<MeshGenerator>();
-        //        if (meshGenerator)
-        //            meshGenerator.GenerateMesh(_map3D, _meshSizeModifier);
-        //    }
-        //    else
-        //    {
-        //        UpdateCubes();
-        //    }
-        //}
+                MeshGenerator meshGenerator = GetComponent<MeshGenerator>();
+                if (meshGenerator)
+                    meshGenerator.GenerateMesh(_map3D, _meshSizeModifier);
+            }
+            else
+            {
+                UpdateCubes();
+            }
+        }
 
     }
 
@@ -459,8 +464,9 @@ public class MapGenerator3D : MapGenerator
         if (_useDigger)
         {
            // corridors.AddRange(DigCorridors(survivingRooms,corridors));
-
-            DigRooms(survivingRooms, corridors);
+           if(_mineCenter)
+            survivingRooms = MineRooms(survivingRooms);
+           DigRooms(survivingRooms, corridors);
         }
     }
 
@@ -469,13 +475,13 @@ public class MapGenerator3D : MapGenerator
           
         foreach (Room room in rooms)
         {
-            if (room.RoofIndex - room.FloorIndex > _maxRoomHeight&&_randomNumberGenerator.Next(0,100)<_roomCutChance)
+            if (room.YMax - room.YMin > _maxRoomHeight&&_randomNumberGenerator.Next(0,100)<_roomCutChance)
             {
                 if (_randomNumberGenerator.Next(0, 100) < 50)
                 {
 
-                    int halfRoomHeight = _randomNumberGenerator.Next(-1, 2) + room.FloorIndex +
-                                         (room.RoofIndex - room.FloorIndex) / 2;
+                    int halfRoomHeight = _randomNumberGenerator.Next(-1, 2) + room.YMin +
+                                         (room.YMax - room.YMin) / 2;
                     foreach (Coord cell in room.Cells)
                     {
                         if (cell.yCoord > halfRoomHeight - _roomCutHeight / 2 &&
@@ -491,7 +497,7 @@ public class MapGenerator3D : MapGenerator
                     int rand = _randomNumberGenerator.Next(1, 3);
                     if (rand == 2)
                         rand = 3;
-                    int posNext = rand* (room.FloorIndex + (room.RoofIndex - room.FloorIndex)) / 4;
+                    int posNext = rand* (room.YMin + (room.YMax - room.YMin)) / 4;
                     if (rand == 1)
                     {
                         foreach (Coord cell in room.Cells)
@@ -589,26 +595,26 @@ public class MapGenerator3D : MapGenerator
                 if (firstRoom == secondRoom || firstRoom.IsConnected(secondRoom))
                     continue;
                 //3 is a var
-                //if (firstRoom.FloorIndex >= secondRoom.RoofIndex + 3 || firstRoom.RoofIndex + 3 <= secondRoom.FloorIndex)
+                //if (firstRoom.YMin >= secondRoom.YMax + 3 || firstRoom.YMax + 3 <= secondRoom.YMin)
                 //    continue;
                 for (int indexFirstRoom = 0; indexFirstRoom < firstRoom.EdgeCells.Count; indexFirstRoom++)
                 {
-                    if (firstRoom.FloorIndex == firstRoom.EdgeCells[indexFirstRoom].yCoord ||
-                        firstRoom.RoofIndex == firstRoom.EdgeCells[indexFirstRoom].yCoord)
+                    if (firstRoom.YMin == firstRoom.EdgeCells[indexFirstRoom].yCoord ||
+                        firstRoom.YMax == firstRoom.EdgeCells[indexFirstRoom].yCoord)
                         continue;
                     /* else*/
                     //only connect form the bottom 30%
-                    if (firstRoom.FloorIndex + 0.3f * (firstRoom.RoofIndex - firstRoom.FloorIndex) <
+                    if (firstRoom.YMin + 0.3f * (firstRoom.YMax - firstRoom.YMin) <
                         firstRoom.EdgeCells[indexFirstRoom].yCoord)
                         continue;
                     for (int indexSecondRoom = 0; indexSecondRoom < secondRoom.EdgeCells.Count; indexSecondRoom++)
                     {
 
-                        if (secondRoom.FloorIndex == secondRoom.EdgeCells[indexSecondRoom].yCoord ||
-                            secondRoom.RoofIndex == secondRoom.EdgeCells[indexSecondRoom].yCoord)
+                        if (secondRoom.YMin == secondRoom.EdgeCells[indexSecondRoom].yCoord ||
+                            secondRoom.YMax == secondRoom.EdgeCells[indexSecondRoom].yCoord)
                             continue;
                         //only connect form the bottom 35%
-                        if (secondRoom.FloorIndex + 0.35f * (secondRoom.RoofIndex - secondRoom.FloorIndex) <
+                        if (secondRoom.YMin + 0.35f * (secondRoom.YMax - secondRoom.YMin) <
                             secondRoom.EdgeCells[indexSecondRoom].yCoord)
                             continue;
 
@@ -1141,6 +1147,40 @@ public class MapGenerator3D : MapGenerator
         return null;
     }
 
+    private List<Room> MineRooms(List<Room> rooms)
+    {
+
+        foreach (Room room in rooms)
+        {
+            if (_randomNumberGenerator.Next(0, 100) < 80)
+                continue;
+
+            int xDiff = room.XMax - room.XMin;
+            int yDiff = room.YMax - room.YMin;
+            int zDiff = room.ZMax - room.ZMin;
+            for (int x = room.CenterCoord.xCoord - xDiff/4; x <= room.CenterCoord.xCoord + xDiff/4; x++)
+            {
+                for (int y = room.CenterCoord.yCoord - yDiff/4; y <= room.CenterCoord.yCoord + yDiff/4; y++)
+                {
+                    for (int z = room.CenterCoord.zCoord - zDiff/4; z <= room.CenterCoord.zCoord + zDiff/4; z++)
+                    {
+                        if (IsInMap3D(x, y, z))
+                        {
+                            if (_map3D[x, y, z].state == States.Wall)
+                            {
+                                _map3D[x, y, z].state = States.Empty;
+                                _map3D[x, y, z].color = Color.yellow;
+                                room.Cells.Add(new Coord(x, y, z));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return rooms;
+    }
+
     private void DigRooms(List<Room> rooms, List<Corridor> corridors)
     {
         Area currentRoom = new Room();
@@ -1216,6 +1256,8 @@ public class MapGenerator3D : MapGenerator
             ++breakOutCounter;
 
             if (breakOutCounter > _breakOutValue)
+                return;
+            if (newCorridors.Count >= _connectionMax)
                 return;
         }
     }
