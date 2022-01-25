@@ -12,7 +12,7 @@ public abstract class MapGenerator : MonoBehaviour
     [SerializeField] protected string _seed;
     [SerializeField] [Range(0, 1)] protected float _randomFillPercent = 0.5f;
     [SerializeField] [Range(0, 100)] protected int _sizeThreshold = 5;
-    [SerializeField] [Range(0, 20)] protected int _iterations = 5;
+    [SerializeField] [Range(0, 100)] protected int _iterations = 5;
     [SerializeField] [Range(0, 30)] protected int _neighbourWallCountToChange = 4;
     [SerializeField] [Range(0, 30)] protected int _neighbourEmptyCountToChange = 4;
 

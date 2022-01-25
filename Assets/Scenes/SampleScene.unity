@@ -399,6 +399,7 @@ GameObject:
   - component: {fileID: 1198924076}
   - component: {fileID: 1198924075}
   - component: {fileID: 1198924077}
+  - component: {fileID: 1198924078}
   m_Layer: 0
   m_Name: MapGenerator3D
   m_TagString: Untagged
@@ -420,12 +421,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _makeEdgesWalls: 1
   _useRandomSeed: 1
-  _seed: 17/01/2022 15:10:09
-  _randomFillPercent: 0.56
-  _sizeThreshold: 10
-  _iterations: 10
+  _seed: 21/01/2022 15:42:14
+  _randomFillPercent: 0.559
+  _sizeThreshold: 0
+  _iterations: 15
   _neighbourWallCountToChange: 14
-  _neighbourEmptyCountToChange: 17
+  _neighbourEmptyCountToChange: 16
   _colorRegions: 1
   _cube: {fileID: 3440554682568251086, guid: e876bbbd2b549534f86e4263de21a926, type: 3}
   _showWalls: 0
@@ -434,10 +435,10 @@ MonoBehaviour:
   _shellEmpty: 0
   _visualize: 1
   _makeShellSameAsNeighbour: 0
-  _connectClosestRooms: 1
+  _connectClosestRooms: 0
   _forceAccessibilityFromMainRoom: 1
-  _corridorRadius: {x: 1, y: 3}
-  _useDigger: 1
+  _corridorRadius: {x: 2, y: 3}
+  _useDigger: 0
   _breakOutValue: 59
   _connectionMax: 2
   _corridorSpacing: 1
@@ -449,12 +450,14 @@ MonoBehaviour:
   _width: 30
   _height: 30
   _depth: 30
-  _generateMesh: 0
+  _generateMesh: 1
   _meshSizeModifier: 2
   _maxRoomHeight: 10
   _roomCutHeight: 4
-  _roomCutChance: 90
-  _mineCenter: 1
+  _roomCutChance: 0
+  _mineCenter: 0
+  _growRooms: 0
+  _growIterations: 0
 --- !u!4 &1198924073
 Transform:
   m_ObjectHideFlags: 0
@@ -544,6 +547,21 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 0}
+--- !u!114 &1198924078
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1198924071}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4468e5bcb7daa6343a5b922d21e3d8ab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _pivot: {fileID: 0}
+  _rotateAxis: {x: 0, y: 1, z: 0}
+  _rotationSpeed: 0
 --- !u!1 &1730513684
 GameObject:
   m_ObjectHideFlags: 0
@@ -627,6 +645,8 @@ MonoBehaviour:
   _roomCutHeight: 4
   _roomCutChance: 70
   _mineCenter: 0
+  _growRooms: 1
+  _growIterations: 0
   _chunkDimensions:
     xCoord: 2
     yCoord: 2

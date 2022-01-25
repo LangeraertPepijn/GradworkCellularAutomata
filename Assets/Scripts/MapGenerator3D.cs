@@ -21,6 +21,8 @@ public class MapGenerator3D : MapGenerator
     [SerializeField] private int _roomCutHeight = 4;
     [SerializeField] private int _roomCutChance = 90;
     [SerializeField] private bool _mineCenter = true;
+    [SerializeField] private bool _growRooms = true;
+    [SerializeField] [Range(0,10)] private int _growIterations = 0;
 
     public bool GenerateMesh
     {
@@ -49,6 +51,14 @@ public class MapGenerator3D : MapGenerator
     public bool MineCenter
     {
         set => _mineCenter = value;
+    }
+    public bool GrowRoom
+    {
+        set => _growRooms = value;
+    }
+    public int GrowIterations
+    {
+        set => _growIterations = value;
     }
     [CanBeNull] private Cell[,,] _map3D;
     private States[,,] _stateBuffer3D;
@@ -106,7 +116,7 @@ public class MapGenerator3D : MapGenerator
 
         RandomFillMap();
         IterateStates();
-        ExamineMap();
+        //ExamineMap();
         //comment for large map
         if (_visualize)
         {
@@ -216,8 +226,7 @@ public class MapGenerator3D : MapGenerator
     // iterate using rules over the map to change it once to see what changes
     protected override void IterateStatesOnce()
     {
-        float w = 0;
-        float e = 0;
+  
         for (int x = 0; x < _width; x++)
         {
             for (int y = 0; y < _height; y++)
@@ -231,14 +240,14 @@ public class MapGenerator3D : MapGenerator
                         //_map3D[x, y, z].state = States.Wall;
 
                         _stateBuffer3D[x, y, z] = States.Wall;
-                        w++;
+                  
                     }
                     else if (26 - _map3D[x, y, z].neighbourCount > _neighbourEmptyCountToChange)
                     {
                         //_map3D[x, y, z].state = States.Empty;
 
                         _stateBuffer3D[x, y, z] = States.Empty;
-                        e++;
+                
 
                     }
 
@@ -301,6 +310,35 @@ public class MapGenerator3D : MapGenerator
                 }
             }
      
+        }
+    }
+
+
+    protected void RemoveEmpty()
+    {
+        List<Coord> indices = new List<Coord>();
+        for (int x = 0; x < _width; x++)
+        {
+            for (int y = 0; y < _height; y++)
+            {
+                for (int z = 0; z < _depth; z++)
+                {
+
+                    //_map3D[x, y, z].neighbourCount = GetSurroundingWallCountBiased(x, y, z);
+                    _map3D[x, y, z].neighbourCount = GetSurroundingWallCount(x, y, z);
+                    if ( _map3D[x, y, z].neighbourCount <10)
+                    {
+                        //_map3D[x, y,z].state = States.Empty;
+                        _stateBuffer3D[x, y, z] = States.Empty;
+                        indices.Add(new Coord(x,y,z));
+                    }
+                }
+            }
+        }
+
+        foreach (Coord index in indices)
+        {
+            _map3D[index.xCoord, index.yCoord, index.zCoord].state = _stateBuffer3D[index.xCoord, index.yCoord, index.zCoord];
         }
     }
 
@@ -404,6 +442,60 @@ public class MapGenerator3D : MapGenerator
 
        
     }
+
+    void GrowRooms(List<Room> rooms)
+    {
+        foreach (Room room in rooms)
+        {
+            if (_randomNumberGenerator.Next(0, 100) < 30)
+            {
+
+                foreach (var edgeCell in room.EdgeCells)
+                {
+                    int equalityIndex = 0;
+                    for (int x = edgeCell.xCoord - 1; x <= edgeCell.xCoord + 1; x++)
+                    {
+                        if (x == edgeCell.xCoord)
+                            ++equalityIndex;
+                        for (int y = edgeCell.yCoord - 1; y <= edgeCell.yCoord + 1; y++)
+                        {
+                            if (y == edgeCell.yCoord)
+                                ++equalityIndex;
+                            for (int z = edgeCell.zCoord - 1; z <= edgeCell.zCoord + 1; z++)
+                            {
+                                if (z == edgeCell.zCoord)
+                                    ++equalityIndex;
+                                if (_randomNumberGenerator.Next(0, 100) >= 90)
+                                        continue;
+                                //von neumann neighbourhood
+                                if (IsInMap3D(x, y, z) && equalityIndex == 2 &&
+                                    _map3D[x, y, z].state == States.Wall)
+                                {
+
+                                    Vector3Int dir = new Vector3Int(x, y, z) -
+                                                     new Vector3Int(edgeCell.xCoord, edgeCell.yCoord,
+                                                         edgeCell.zCoord);
+                                    if (dir.y == 0)
+                                    {
+                                        _map3D[x, y, z].state = States.Empty;
+                                    }
+                                }
+
+                                if (z == edgeCell.zCoord)
+                                    --equalityIndex;
+                            }
+
+                            if (y == edgeCell.yCoord)
+                                --equalityIndex;
+                        }
+
+                        if (x == edgeCell.xCoord)
+                            --equalityIndex;
+                    }
+                }
+            }
+        }
+    }
     // if the room is too small remove it
     public override void ExamineMap()
     {
@@ -425,6 +517,36 @@ public class MapGenerator3D : MapGenerator
                 survivingRooms.Add(new Room(region,_map3D));
             }
         }
+
+        if (_growRooms)
+        {
+            for (int i = 0; i < _growIterations; i++)
+            {
+
+                GrowRooms(survivingRooms);
+                regions = GetRegionsOfState(States.Empty);
+                survivingRooms.Clear();
+
+                foreach (List<Coord> region in regions)
+                {
+                    if (region.Count < _sizeThreshold)
+                    {
+                        foreach (Coord cell in region)
+                        {
+                            _map3D[cell.xCoord, cell.yCoord, cell.zCoord].state = States.Wall;
+                        }
+                    }
+                    else
+                    {
+
+                        survivingRooms.Add(new Room(region, _map3D));
+                    }
+                }
+            }
+
+            RemoveEmpty();
+        }
+
 
         CutLargeRooms(survivingRooms);
 
@@ -867,6 +989,35 @@ public class MapGenerator3D : MapGenerator
 
         return cells;
     }
+    private List<Coord> DrawSphereRadius(Coord cell, Color color, Coord radiusSphere)
+    {
+      
+        List<Coord> cells = new List<Coord>();
+        for (int x = -radiusSphere.xCoord; x < radiusSphere.xCoord; x++)
+        {
+            for (int y = -radiusSphere.yCoord; y < radiusSphere.yCoord; y++)
+            {
+                for (int z = -radiusSphere.zCoord; z < radiusSphere.zCoord; z++)
+                {
+                    if (x * x + y * y + z * z <= ((radiusSphere.xCoord * radiusSphere.yCoord*radiusSphere.zCoord)*2/3.0f))
+                    {
+                        int xToChange = cell.xCoord + x;
+                        int yToChange = cell.yCoord + y;
+                        int zToChange = cell.zCoord + z;
+
+                        if (IsInMap3D(xToChange, yToChange, zToChange))
+                        {
+                            cells.Add(new Coord(xToChange, yToChange, zToChange));
+                            _map3D[xToChange, yToChange, zToChange].state = States.Empty;
+                            _map3D[xToChange, yToChange, zToChange].color = color;
+                        }
+                    }
+                }
+            }
+        }
+
+        return cells;
+    }
 
     //creates a corridor in between two rooms 
     protected override Corridor CreateCorridor(Room firstRoom, Room secondRoom, Coord firstRoomCell, Coord secondRoomCell)
@@ -895,6 +1046,7 @@ public class MapGenerator3D : MapGenerator
     public override void UpdateCubes()
     {
         GameObject chunk = new GameObject("Chunk");
+        chunk.AddComponent<RotateObject>();
         for (int x = 0; x < _width; x++)
         {
             for (int y = 0; y < _height; y++)
@@ -1158,24 +1310,25 @@ public class MapGenerator3D : MapGenerator
             int xDiff = room.XMax - room.XMin;
             int yDiff = room.YMax - room.YMin;
             int zDiff = room.ZMax - room.ZMin;
-            for (int x = room.CenterCoord.xCoord - xDiff/4; x <= room.CenterCoord.xCoord + xDiff/4; x++)
-            {
-                for (int y = room.CenterCoord.yCoord - yDiff/4; y <= room.CenterCoord.yCoord + yDiff/4; y++)
-                {
-                    for (int z = room.CenterCoord.zCoord - zDiff/4; z <= room.CenterCoord.zCoord + zDiff/4; z++)
-                    {
-                        if (IsInMap3D(x, y, z))
-                        {
-                            if (_map3D[x, y, z].state == States.Wall)
-                            {
-                                _map3D[x, y, z].state = States.Empty;
-                                _map3D[x, y, z].color = Color.yellow;
-                                room.Cells.Add(new Coord(x, y, z));
-                            }
-                        }
-                    }
-                }
-            }
+            room.Cells.AddRange( DrawSphereRadius(room.CenterCoord, Color.yellow,new Coord(xDiff/4,yDiff/4,zDiff/4)));
+            //for (int x = room.CenterCoord.xCoord - xDiff/4; x <= room.CenterCoord.xCoord + xDiff/4; x++)
+            //{
+            //    for (int y = room.CenterCoord.yCoord - yDiff/4; y <= room.CenterCoord.yCoord + yDiff/4; y++)
+            //    {
+            //        for (int z = room.CenterCoord.zCoord - zDiff/4; z <= room.CenterCoord.zCoord + zDiff/4; z++)
+            //        {
+            //            if (IsInMap3D(x, y, z))
+            //            {
+            //                if (_map3D[x, y, z].state == States.Wall)
+            //                {
+            //                    _map3D[x, y, z].state = States.Empty;
+            //                    _map3D[x, y, z].color = Color.yellow;
+            //                    room.Cells.Add(new Coord(x, y, z));
+            //                }
+            //            }
+            //        }
+            //    }
+            //}
         }
 
         return rooms;

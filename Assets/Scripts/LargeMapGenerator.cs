@@ -20,6 +20,8 @@ public class LargeMapGenerator : MapGenerator
     [SerializeField] private int _roomCutHeight = 4;
     [SerializeField] private int _roomCutChance = 90;
     [SerializeField] private bool _mineCenter = false;
+    [SerializeField] private bool _growRooms = true;
+    [SerializeField] [Range(0, 10)] private int _growIterations = 0;
     [SerializeField] private Coord _chunkDimensions = new Coord(1, 1, 1);
     private MapGenerator[,,] _generators;
     private Thread[,,] _threads;
@@ -60,6 +62,8 @@ public class LargeMapGenerator : MapGenerator
                             generator3D.RoomCutChance = _roomCutChance;
                             generator3D.MeshSizeModifier = _meshSizeModifier;
                             generator3D.MineCenter = _mineCenter;
+                            generator3D.GrowIterations = _growIterations;
+                            generator3D.GrowRoom = _growRooms;
                         }
 
                         _generators[x, y, z] = generator;
