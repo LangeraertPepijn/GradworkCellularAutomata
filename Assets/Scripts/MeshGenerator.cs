@@ -82,12 +82,7 @@ public class MeshGenerator : MonoBehaviour
     {
         
         int[] indices = Table.TriTable.SubArray(cube.GetConfiguration(),16);
-   
-        //foreach (ControlNode controlNode in cube.GetCorners())
-        //{
-        //}
-
-
+        
         List<Node> points = new List<Node>();
         foreach (int index in indices)
         {
@@ -95,10 +90,6 @@ public class MeshGenerator : MonoBehaviour
                 points.Add(cube.GetNode(index)); 
         }
         MeshFromPoints(points.ToArray());
-       // int indexA = Table.cornerIndexAFromEdge[t];
-        //int indexB = Table.cornerIndexBFromEdge[t];
-
-
     }
 
     private void MeshFromPoints(params Node[] points)
@@ -110,33 +101,6 @@ public class MeshGenerator : MonoBehaviour
             CreateTriangle(points[i-3], points[i-2], points[i-1]);
             //CreateTriangle(points[i-3], points[i-1], points[i-2]);
         }
-
-        //if (points.Length >= 3)
-        //{
-        //    //CreateTriangle(points[0], points[1], points[2]);
-        //    //CreateTriangle(points[0], points[2], points[1]);
-        //}
-        //if (points.Length >= 6)
-        //{
-        //    //CreateTriangle(points[3], points[4], points[5]);
-        //    //CreateTriangle(points[3], points[5], points[4]);
-        //}
-        //if (points.Length >= 9)
-        //{
-        //    //CreateTriangle(points[6], points[7], points[8]);
-        //    //CreateTriangle(points[6], points[8], points[7]);
-        //}
-        //if (points.Length >= 12)
-        //{
-        //    //CreateTriangle(points[9], points[10], points[11]);
-        //    //CreateTriangle(points[9], points[11], points[10]);
-        //}
-        //if (points.Length >= 15)
-        //{
-        //    //CreateTriangle(points[12], points[13], points[14]);
-        //    //CreateTriangle(points[12], points[14], points[13]);
-        //}
-
     }
 
     private void AssignVertices(Node[] points)

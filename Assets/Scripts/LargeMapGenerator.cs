@@ -64,6 +64,7 @@ public class LargeMapGenerator : MapGenerator
                             generator3D.MineCenter = _mineCenter;
                             generator3D.GrowIterations = _growIterations;
                             generator3D.GrowRoom = _growRooms;
+                            generator3D.IsChunk = true;
                         }
 
                         _generators[x, y, z] = generator;

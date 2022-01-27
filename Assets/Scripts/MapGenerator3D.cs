@@ -24,6 +24,15 @@ public class MapGenerator3D : MapGenerator
     [SerializeField] private bool _growRooms = true;
     [SerializeField] [Range(0,10)] private int _growIterations = 0;
 
+    private bool _isChunk;
+
+    public bool IsChunk
+    {
+        get => _isChunk;
+
+        set => _isChunk = value;
+    }
+
     public bool GenerateMesh
     {
         set => _generateMesh=value;
@@ -81,7 +90,8 @@ public class MapGenerator3D : MapGenerator
     //comment for largeMap
     private void Start()
     {
-        GenerateMap();
+        if(!_isChunk)
+            GenerateMap();
     }
 
     // Generate the Cellular Automata GetMap
@@ -116,9 +126,9 @@ public class MapGenerator3D : MapGenerator
 
         RandomFillMap();
         IterateStates();
-        //ExamineMap();
+        ExamineMap();
         //comment for large map
-        if (_visualize)
+        if (_visualize&&!_isChunk)
         {
             if (_generateMesh)
             {
@@ -1046,66 +1056,45 @@ public class MapGenerator3D : MapGenerator
     public override void UpdateCubes()
     {
         GameObject chunk = new GameObject("Chunk");
-        chunk.AddComponent<RotateObject>();
+        //chunk.AddComponent<RotateObject>();
         for (int x = 0; x < _width; x++)
         {
             for (int y = 0; y < _height; y++)
             {
                 for (int z = 0; z < _depth; z++)
                 {
-                    //if (_map3D[x, y, z].mesh)
-                    //{
-                    //    MeshRenderer renderer = _map3D[x, y, z].mesh.GetComponent<MeshRenderer>();
-                    //    if (renderer)
-                    //    {
-                    //        if (_map3D[x, y, z].color == new Color())
-                    //        {
-                    //            renderer.material.color = (_map3D[x, y, z].state == States.Wall) ? Color.black : Color.white;
-                    //        }
-                    //        else
-                    //        {
 
-                    //            renderer.material.color = _map3D[x, y, z].color;
-                    //        }
-                    //    }
 
-                    //    if ((!_showWalls && _map3D[x, y, z].state == States.Wall) ||
-                    //        (!_showEmpty && _map3D[x, y, z].state == States.Empty) || (_shellEmpty && _map3D[x, y, z].neighbourCount == 26)
-                    //        || (!_showShell &&
-                    //            (x == 0 || x == _width - 1 || y == 0 || y == _height - 1 || z == 0 || z == _depth - 1)))
-                    //        _map3D[x, y, z].mesh.gameObject.SetActive(false);
-                    //    else
-                    //        _map3D[x, y, z].mesh.gameObject.SetActive(true);
-                    //}
-                    //else
+                    Vector3 pos = new Vector3(-_width / 2 + x + (_width * _offset.x),
+                        -_height / 2 + y + (_height * _offset.y),
+                        -_depth / 2 + z + (_depth * _offset.z));
+
+                    _map3D[x, y, z].mesh = Instantiate(_cube, pos, Quaternion.identity, chunk.transform);
+
+
+                    MeshRenderer renderer = _map3D[x, y, z].mesh.GetComponent<MeshRenderer>();
+                    if (renderer)
                     {
-                        Vector3 pos = new Vector3(-_width / 2 + x + (_width * _offset.x), -_height / 2 + y + (_height * _offset.y),
-                            -_depth / 2 + z + (_depth * _offset.z));
-                        //_map3D[x, y, z].mesh = Instantiate(_cube,pos,Quaternion.identity);
-                        _map3D[x, y, z].mesh = Instantiate(_cube,pos,Quaternion.identity,chunk.transform);
-                        //_map3D[x, y, z].mesh.transform.position = pos;
-
-                        MeshRenderer renderer = _map3D[x, y, z].mesh.GetComponent<MeshRenderer>();
-                        if (renderer)
+                        if (_map3D[x, y, z].color == new Color())
                         {
-                            if (_map3D[x, y, z].color == new Color())
-                            {
-                                renderer.material.color = (_map3D[x, y, z].state == States.Wall) ? Color.black : Color.white;
-                            }
-                            else
-                            {
-                       
-                                renderer.material.color = _map3D[x, y, z].color;
-                            }
+                            renderer.material.color =
+                                (_map3D[x, y, z].state == States.Wall) ? Color.black : Color.white;
                         }
-
-                        if ((!_showWalls && _map3D[x, y, z].state == States.Wall) ||
-                            (!_showEmpty && _map3D[x, y, z].state == States.Empty) || (_shellEmpty&&_map3D[x, y, z].neighbourCount == 26) || (!_showShell &&
-                            (x == 0 || x == _width - 1 || y == 0 || y == _height - 1 || z == 0 || z == _depth - 1)))
-                            _map3D[x, y, z].mesh.gameObject.SetActive(false);
                         else
-                            _map3D[x, y, z].mesh.gameObject.SetActive(true);
+                        {
+
+                            renderer.material.color = _map3D[x, y, z].color;
+                        }
                     }
+
+                    if ((!_showWalls && _map3D[x, y, z].state == States.Wall) ||
+                        (!_showEmpty && _map3D[x, y, z].state == States.Empty) ||
+                        (_shellEmpty && _map3D[x, y, z].neighbourCount == 26) || (!_showShell &&
+                        (x == 0 || x == _width - 1 || y == 0 || y == _height - 1 || z == 0 || z == _depth - 1)))
+                        _map3D[x, y, z].mesh.gameObject.SetActive(false);
+                    else
+                        _map3D[x, y, z].mesh.gameObject.SetActive(true);
+
 
 
                 }
@@ -1425,9 +1414,7 @@ public class MapGenerator3D : MapGenerator
             {
                 if (currentRoom != room)
                 {
-                    //color debug show end node
-                    //_map3D[potentialCorridor.Last().xCoord, potentialCorridor.Last().yCoord, potentialCorridor.Last().zCoord].state = States.Empty;
-                    //_map3D[potentialCorridor.Last().xCoord, potentialCorridor.Last().yCoord, potentialCorridor.Last().zCoord].color = Color.green;
+
                     potentialCorridor.RemoveCell(potentialCorridor.Last());
 
                     if (currentRoom is Corridor corridor)
@@ -1452,9 +1439,9 @@ public class MapGenerator3D : MapGenerator
 
                             _map3D[edgeCell.xCoord, edgeCell.yCoord, edgeCell.zCoord].state = States.Empty;
                             _map3D[edgeCell.xCoord, edgeCell.yCoord, edgeCell.zCoord].color = Color.white;
-                            //_map3D[edgeCell.xCoord, edgeCell.yCoord, edgeCell.zCoord].color = Color.magenta;
+                            
                         }
-                        //newCells.AddRange(DrawSphere(edgeCell, Color.magenta));
+          
                         newCells.AddRange(DrawSphere(edgeCell, Color.white));
                     }
                     potentialCorridor.AddCells(newCells);
@@ -1564,8 +1551,7 @@ public class MapGenerator3D : MapGenerator
 
         return null;
     }
-    //seed 12/01/2022 12:55:43
-    //seed 30/12/2021 15:09:28
+
     private Room DigRoom(Coord start, Vector3Int dir,List<Room> rooms)
     {
 
